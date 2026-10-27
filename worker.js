@@ -56,7 +56,7 @@ export default {
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Password, Range",
     "Access-Control-Expose-Headers": "Content-Range, Content-Length, Accept-Ranges",
   };
