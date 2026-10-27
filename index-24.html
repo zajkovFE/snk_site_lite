@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СНК Психиатрии, Медпсихологии и Аддиктологии</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0B132B',
+                        darkCard: '#1C2541',
+                        darkAccent: '#3A506B',
+                        accentTeal: '#0D9488',
+                        accentIndigo: '#6366F1',
+                        accentViolet: '#8B5CF6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        html:not(.dark) body { background-color: #F8FAFC !important; color: #0F172A !important; }
+        html:not(.dark) .bg-darkBg { background-color: #FFFFFF !important; }
+        html:not(.dark) .bg-darkCard {
+            background-color: #FFFFFF !important;
+            border-color: #E2E8F0 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        html:not(.dark) .text-white { color: #0F172A !important; }
+        html:not(.dark) .text-slate-300, html:not(.dark) .text-slate-400 { color: #475569 !important; }
+        html:not(.dark) .border-slate-800, html:not(.dark) .border-slate-700 { border-color: #E2E8F0 !important; }
+        html:not(.dark) .bg-slate-900, html:not(.dark) .bg-slate-800 { background-color: #F1F5F9 !important; color: #0F172A !important; }
+
+        .neural-bg {
+            background-image: radial-gradient(rgba(13, 148, 136, 0.15) 1px, transparent 0);
+            background-size: 28px 28px;
+        }
+        html:not(.dark) .neural-bg { background-image: radial-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 0); }
+
+        .rotated-logo-container {
+            width: 44px; height: 44px; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #0B132B;
+        }
+        .rotated-logo-img { width: 100%; height: 100%; object-fit: cover; transform: rotate(90deg) scale(1.2); }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(13, 148, 136, 0.4); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(13, 148, 136, 0.7); }
+    </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col neural-bg transition-colors duration-300">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-40 bg-darkBg/90 backdrop-blur-md border-b border-slate-800 transition-colors duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="rotated-logo-container border-2 border-teal-500 shadow-md shadow-teal-500/20">
+                    <img id="siteLogoImg" src="1000097239_8a739e.jpg" alt="Логотип СНК" class="rotated-logo-img" onerror="this.onerror=null; this.src='https://placehold.co/100x100/0B132B/5BC0BE?text=СНК';">
+                </div>
+                <div>
+                    <h1 id="brandTitleText" class="font-extrabold text-sm sm:text-base leading-tight tracking-wide text-slate-900 dark:text-white">СНК Психиатрии</h1>
+                    <p id="brandSubtitleText" class="text-[10px] sm:text-xs text-teal-600 dark:text-teal-400 font-semibold">Медпсихологии и Аддиктологии</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-800 dark:bg-slate-800 hover:bg-slate-700 text-amber-400 transition-all shadow-inner border border-slate-700/50" title="Переключить тему">
+                    <i class="fa-solid fa-sun text-lg" id="themeIcon"></i>
+                </button>
+                <button onclick="toggleMenu()" class="p-2.5 rounded-xl bg-slate-800 dark:bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700/50" title="Меню">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <div id="sidebarBackdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300"></div>
+    <aside id="sidebar" class="fixed top-0 right-0 h-full w-80 bg-slate-900/95 dark:bg-slate-900/95 border-l border-slate-800 z-50 transform translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col justify-between p-6">
+        <div>
+            <div class="flex items-center justify-between pb-6 border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-compass text-teal-400 text-xl"></i>
+                    <span class="font-bold text-lg text-white">Навигация</span>
+                </div>
+                <button onclick="toggleMenu()" class="text-slate-400 hover:text-white text-xl p-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <nav class="mt-6 space-y-2">
+                <button onclick="switchTab('home')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-house w-6 text-center text-teal-400"></i><span id="menuTextHome">Главная</span>
+                </button>
+                <button onclick="switchTab('members')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-user-group w-6 text-center text-teal-400"></i><span id="menuTextMembers">Руководство и Члены</span>
+                </button>
+                <button onclick="switchTab('closed')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-lock w-6 text-center text-teal-400"></i><span id="menuTextClosed">Закрытая зона СНК</span>
+                </button>
+                <button onclick="switchTab('science')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-flask w-6 text-center text-teal-400"></i><span id="menuTextScience">Научная деятельность</span>
+                </button>
+                <button onclick="switchTab('contacts')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-address-book w-6 text-center text-teal-400"></i><span id="menuTextContacts">Контакты</span>
+                </button>
+                <button onclick="switchTab('cabinet')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-user-graduate w-6 text-center text-teal-400"></i><span>Личный кабинет</span>
+                </button>
+                <button id="menuAdminBtn" onclick="switchTab('moderation')" class="nav-btn hidden w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-slate-800 text-slate-300 hover:text-teal-400 transition-all font-medium">
+                    <i class="fa-solid fa-clipboard-check w-6 text-center text-emerald-400"></i><span>Модерация</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="pt-6 border-t border-slate-800 space-y-3">
+            <button onclick="promptSiteSettings()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-400 text-xs font-bold transition-all flex items-center justify-center gap-2 border border-slate-700">
+                <i class="fa-solid fa-gears"></i> Настройки сайта
+            </button>
+            <div class="text-[11px] text-slate-500 text-center">&copy; 2026 СНК Психиатрии. Все права защищены.</div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- TAB 1: HOME -->
+        <section id="tab-home" class="tab-content space-y-12">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-darkCard to-slate-900 border border-slate-800 p-8 sm:p-12 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="relative z-10 max-w-2xl space-y-6">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                        <i class="fa-solid fa-atom mr-1.5"></i> Научно-исследовательское сообщество
+                    </span>
+                    <h1 id="heroTitleMain" class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                        Изучаем тайны <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-400 to-violet-400">разума и поведения</span>
+                    </h1>
+                    <p id="heroSubtitleMain" class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                        Студенческий научный клуб объединяет молодых исследователей, интересующихся современной психиатрией, клинической психологией и актуальными проблемами аддиктологии.
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <button onclick="switchTab('members')" class="px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-600 font-bold text-white hover:opacity-90 transition-all shadow-lg shadow-teal-500/20 flex items-center space-x-2">
+                            <span>Вступить в клуб</span><i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                        <a href="#calendar-section" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium border border-slate-700 transition-all">
+                            Календарь заседаний
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center p-6 bg-slate-900/80 border border-slate-800 rounded-3xl shrink-0 shadow-inner">
+                    <div class="w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden border-4 border-teal-500/80 shadow-2xl flex items-center justify-center bg-slate-950">
+                        <img id="heroLogoDisplay" src="1000097239_8a739e.jpg" alt="Официальный эмблема СНК" class="w-full h-full object-cover transform rotate-90 scale-125" onerror="this.onerror=null; this.src='https://placehold.co/100x100/0B132B/5BC0BE?text=СНК';">
+                    </div>
+                    <span id="emblemLabelDisplay" class="text-xs font-bold text-teal-400 uppercase tracking-widest mt-4">Официальный герб</span>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="bg-darkCard rounded-3xl border border-slate-800 p-8 shadow-xl space-y-4">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-landmark text-teal-400"></i> История и традиции нашего клуба
+                </h2>
+                <p id="homeHistoryText" class="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                    Наш Студенческий научный клуб был основан на базе кафедры с целью объединения студентов, стремящихся к глубокому изучению ментального здоровья, невротических расстройств и аддиктивных состояний. За годы работы участники клуба подготовили десятки оригинальных исследований, заняли призовые места на международных олимпиадах и стали практикующими специалистами.
+                </p>
+            </div>
+
+            <!-- Goals -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-teal-400"></i> Цели и ключевые направления
+                    </h2>
+                    <button id="adminAddGoalBtn" onclick="openGoalModal()" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Добавить направление
+                    </button>
+                </div>
+                <div id="goalsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            </div>
+
+            <!-- Calendar -->
+            <div id="calendar-section" class="bg-darkCard rounded-3xl border border-slate-800 p-6 sm:p-8 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-check text-teal-400"></i> Календарь заседаний СНК
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">Предстоящие заседания, клинические разборы и лекции</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="changeMonth(-1)" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="calendarMonthYear" class="font-semibold text-white min-w-[140px] text-center">Октябрь 2026</span>
+                        <button onclick="changeMonth(1)" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-chevron-right"></i></button>
+                        <button id="adminAddEventBtn" onclick="openAddEventModal()" class="hidden ml-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Добавить событие
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-2 text-center font-medium text-xs text-slate-400 pb-2 border-b border-slate-800">
+                    <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-rose-400">Сб</div><div class="text-rose-400">Вс</div>
+                </div>
+                <div id="calendarDays" class="grid grid-cols-7 gap-2"></div>
+                <div id="calendarEventsList" class="pt-4 border-t border-slate-800 space-y-3"></div>
+            </div>
+
+            <!-- News -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-teal-400"></i> Последние новости и объявления
+                    </h2>
+                    <button id="adminAddNewsBtn" onclick="openAddNewsModal()" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Добавить новость
+                    </button>
+                </div>
+                <div id="newsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Gallery -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-camera-retro text-teal-400"></i> Галерея заседаний
+                    </h2>
+                    <button id="adminAddGalleryBtn" onclick="openAddGalleryModal()" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Добавить фото в галерею
+                    </button>
+                </div>
+                <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+            </div>
+
+            <!-- Counter -->
+            <div class="rounded-3xl bg-gradient-to-r from-indigo-900/30 via-purple-900/30 to-teal-900/30 border border-slate-700/50 p-8 text-center space-y-3">
+                <p class="text-slate-400 font-medium text-sm uppercase tracking-widest">Статистика сообщества</p>
+                <div class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight">
+                    В наших рядах уже: <span id="memberCount" class="text-teal-400">0</span> человек
+                </div>
+                <p class="text-xs text-slate-400">Присоединяйтесь к нашим научным проектам и исследованиям</p>
+            </div>
+        </section>
+
+        <!-- TAB 2: MEMBERS -->
+        <section id="tab-members" class="tab-content space-y-8 hidden">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-white">Руководство и Члены Клуба</h2>
+                    <p class="text-slate-400 text-sm mt-1">Каждый член клуба может добавить или отредактировать свой профиль</p>
+                </div>
+                <button onclick="openMemberModal()" class="px-5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-all shadow-lg shadow-teal-500/20 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus"></i><span>Добавить себя</span>
+                </button>
+            </div>
+            <div id="membersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- TAB 3: PERSONAL RESEARCHER PROFILE & TABLE -->
+        <section id="tab-profile" class="tab-content space-y-8 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-id-badge text-teal-400"></i> Личный кабинет молодого ученого
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Ваши личные данные, научные труды, таблица публикаций и достижения</p>
+                </div>
+                <button onclick="openEditProfileModal()" class="px-4 py-2.5 rounded-xl bg-teal-500 text-slate-950 font-bold text-xs shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear"></i> Редактировать профиль
+                </button>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="bg-darkCard border border-slate-800 rounded-3xl p-6 sm:p-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-center shadow-xl">
+                <div class="flex flex-col items-center md:items-start space-y-3">
+                    <img id="profileAvatarDisplay" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80" class="w-24 h-24 rounded-full object-cover border-4 border-teal-400 shadow">
+                    <span id="profileAliasDisplay" class="px-3 py-1 rounded-full text-xs font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">Псевдоним</span>
+                </div>
+                <div class="md:col-span-3 space-y-4">
+                    <div>
+                        <h3 id="profileNameDisplay" class="text-2xl font-bold text-white">ФИО Ученого</h3>
+                        <p id="profileRoleDisplay" class="text-teal-400 text-xs font-semibold mt-1">Роль / Статус</p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs text-slate-300 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                        <div><span class="text-slate-500 block">Курс / Группа:</span> <strong id="profileCourseGroupDisplay">5 курс, гр. 1</strong></div>
+                        <div><span class="text-slate-500 block">Место работы:</span> <strong id="profileWorkDisplay">Кафедра психиатрии КГМА</strong></div>
+                        <div><span class="text-slate-500 block">SPIN-код:</span> <strong id="profileSpinDisplay">0000-0000</strong></div>
+                        <div><span class="text-slate-500 block">eLIBRARY ID:</span> <strong id="profileElibraryDisplay">000000</strong></div>
+                        <div><span class="text-slate-500 block">ORCID:</span> <strong id="profileOrcidDisplay">0000-0001-...</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Article & Achievement Buttons -->
+            <div class="flex flex-wrap gap-4 pt-2">
+                <button onclick="openAddProfileArticleModal()" class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-plus"></i> Добавить научную статью
+                </button>
+                <button onclick="openAddAchievementModal()" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-award"></i> Добавить достижение / сертификат
+                </button>
+            </div>
+
+            <!-- Achievements Block -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i> Достижения, сертификаты и дипломы
+                </h3>
+                <div id="profileAchievementsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Scientific Publications Table for Young Scientist -->
+            <div class="space-y-4 pt-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table text-teal-400"></i> Сводная таблица публикаций молодого ученого
+                    </h3>
+                </div>
+
+                <div class="bg-darkCard border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-900 text-slate-400 border-b border-slate-800">
+                                    <th class="p-3.5">№</th>
+                                    <th class="p-3.5">Название с УДК</th>
+                                    <th class="p-3.5">Авторы и соавторы</th>
+                                    <th class="p-3.5">Публикация (Ссылка)</th>
+                                    <th class="p-3.5">Характер</th>
+                                    <th class="p-3.5">Статус</th>
+                                    <th class="p-3.5 text-right">Символов</th>
+                                    <th class="p-3.5 text-right">Стр. А4</th>
+                                    <th class="p-3.5 text-center">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profileArticlesTableBody" class="divide-y divide-slate-800 text-slate-300">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totals Footer / Summary Box -->
+                    <div id="profileTableSummary" class="bg-slate-900/90 p-6 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 text-xs font-semibold">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: CLOSED ZONE -->
+        <section id="tab-closed" class="tab-content space-y-8 hidden">
+            <div id="closedAuthBlock" class="max-w-md mx-auto my-12 bg-darkCard border border-slate-800 p-8 rounded-3xl shadow-2xl text-center space-y-6">
+                <div class="w-16 h-16 rounded-full bg-violet-500/10 text-violet-400 flex items-center justify-center text-2xl mx-auto"><i class="fa-solid fa-user-shield"></i></div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Закрытая зона СНК</h2>
+                    <p class="text-slate-400 text-xs mt-2">Введите пароль доступа для членов научного кружка</p>
+                </div>
+                <form onsubmit="verifyClosedAccess(event)" class="space-y-4">
+                    <input type="password" id="closedPasswordInput" placeholder="Введите пароль..." class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 text-center">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-all shadow-lg">Войти в раздел</button>
+                </form>
+                <p id="closedAuthError" class="text-rose-400 text-xs hidden">Неверный пароль! Попробуйте снова.</p>
+            </div>
+
+            <div id="closedContentBlock" class="hidden space-y-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-folder-open text-teal-400"></i> Библиотека и материалы СНК</h2>
+                        <p class="text-slate-400 text-xs mt-1">Доступ открыт: Книги, пособия и методички</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openAddFileModal()" class="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Добавить файл / книгу</button>
+                        <button onclick="logoutClosedAccess()" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs">Выйти</button>
+                    </div>
+                </div>
+                <div id="closedMaterialsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="bg-darkCard rounded-2xl border border-slate-800 p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-note-sticky text-amber-400"></i> Рабочие заметки кружковца</h3>
+                    <textarea id="closedNotesTextarea" rows="4" oninput="saveClosedNotes()" placeholder="Сохраняйте здесь свои идеи и черновики..." class="w-full p-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-sm focus:outline-none focus:border-teal-400"></textarea>
+                    <p id="notesSavedNotice" class="text-xs text-emerald-400 opacity-0 transition-opacity">Заметки сохранены в localStorage</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: SCIENCE -->
+        <section id="tab-science" class="tab-content space-y-10 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-white">Научная деятельность</h2>
+                    <p class="text-slate-400 text-sm mt-1">Публикации участников и теоретическая база знаний</p>
+                </div>
+                <button onclick="openAddScienceModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i><span>Добавить публикацию</span>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-book-open text-teal-400"></i> Публикации членов клуба</h3>
+                <div id="sciencePubsContainer" class="space-y-4"></div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-award text-emerald-400"></i> Работы участников</h3>
+                <div id="memberWorksContainer" class="space-y-4"></div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-400"></i> Достижения участников</h3>
+                <div id="memberAchievementsContainer" class="space-y-4"></div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-graduation-cap text-violet-400"></i> База знаний молодого исследователя</h3>
+                    <button id="adminAddKbBtn" onclick="openKbModal()" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1"><i class="fa-solid fa-plus"></i> Добавить раздел знаний</button>
+                </div>
+                <div id="kbAccordionContainer" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <!-- TAB 6: CONTACTS -->
+        <section id="tab-cabinet" class="tab-content space-y-8 hidden">
+            <div><h2 class="text-3xl font-extrabold text-white">Личный кабинет</h2>
+            <p class="text-slate-400 text-sm mt-1">Ваш профиль, достижения и таблица публикаций. Профиль вы правите сами, а работы и достижения публикуются после проверки администратором.</p></div>
+            <div id="cabinetBody"></div>
+        </section>
+
+        <section id="tab-moderation" class="tab-content space-y-8 hidden">
+            <div><h2 class="text-3xl font-extrabold text-white">Модерация</h2>
+            <p class="text-slate-400 text-sm mt-1">Подтверждение участников и работ. Видно только администратору.</p></div>
+            <div id="modBody"></div>
+        </section>
+
+        <section id="tab-contacts" class="tab-content space-y-8 hidden">
+            <div>
+                <h2 class="text-3xl font-extrabold text-white">Контакты</h2>
+                <p class="text-slate-400 text-sm mt-1">Свяжитесь с руководством СНК по всем вопросам</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div id="contactDeptBlock" class="bg-darkCard p-6 rounded-2xl border border-slate-800 space-y-4 relative">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4">
+                                <div class="p-3 bg-teal-500/10 text-teal-400 rounded-xl text-xl"><i class="fa-solid fa-hospital"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-base">База кафедры</h4>
+                                    <p id="contactDeptAddress" class="text-slate-400 text-xs mt-1">Университетская клиника, Кафедра психиатрии, каб. 402</p>
+                                </div>
+                            </div>
+                            <button id="adminEditContactBtn" onclick="openContactModal()" class="hidden px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-lg text-xs font-bold transition-all border border-slate-700"><i class="fa-solid fa-pen"></i> Редактировать</button>
+                        </div>
+                        <div class="border-t border-slate-800 pt-3 space-y-2 text-xs text-slate-300">
+                            <div class="flex items-center space-x-3"><i class="fa-solid fa-envelope text-teal-400"></i><span id="contactDeptEmail">snk.psychiatry@university.edu</span></div>
+                            <div class="flex items-center space-x-3"><i class="fa-solid fa-clock text-teal-400"></i><span id="contactDeptHours">Заседания: Каждый 3-й четверг месяца в 17:00</span></div>
+                        </div>
+                    </div>
+                </div>
+                <form onsubmit="handleContactSubmit(event)" class="bg-darkCard p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white mb-2">Написать нам</h3>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Ваше ФИО</label><input type="text" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Email для связи</label><input type="email" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Сообщение</label><textarea rows="3" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-600 text-white font-bold text-xs hover:opacity-90 transition-all shadow-lg">Отправить сообщение</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- READER MODAL (DOCX/PDF/TXT Direct Reading) -->
+    <div id="readerModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4 sm:p-8">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-4xl h-[85vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
+                <h3 id="readerTitle" class="font-bold text-white text-sm sm:text-base truncate">Просмотр статьи</h3>
+                <button onclick="closeReaderModal()" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="readerContent" class="flex-grow p-6 overflow-y-auto text-sm text-slate-200 bg-slate-950 font-mono leading-relaxed whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+    <!-- PROFILE EDIT MODAL -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Редактировать профиль ученого</h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveProfileData(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Аватар / Фото</label>
+                    <input type="file" id="profileAvatarInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-400">
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Псевдоним</label><input type="text" id="profileAliasInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">ФИО</label><input type="text" id="profileNameInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Курс, группа</label><input type="text" id="profileCourseGroupInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Место работы / Кафедра</label><input type="text" id="profileWorkInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Роль / Статус</label>
+                    <select id="profileRoleSelect" onchange="handleProfileRoleChange()" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                        <option value="Исследователь СНК">Исследователь СНК</option>
+                        <option value="Аспирант">Аспирант</option>
+                        <option value="Ординатор">Ординатор</option>
+                        <option value="Студент-кружковец">Студент-кружковец</option>
+                        <option value="CUSTOM">-- Свой вариант --</option>
+                    </select>
+                </div>
+                <div id="profileCustomRoleBox" class="hidden">
+                    <input type="text" id="profileCustomRoleInput" placeholder="Введите свою роль..." class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-teal-500 text-white text-xs">
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">SPIN-код</label><input type="text" id="profileSpinInput" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">eLIBRARY ID</label><input type="text" id="profileElibraryInput" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">ORCID</label><input type="text" id="profileOrcidInput" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD ARTICLE IN PERSONAL PROFILE MODAL -->
+    <div id="addProfileArticleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Добавить научную статью</h3>
+                <button onclick="closeAddProfileArticleModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveProfileArticle(event)" class="space-y-3">
+                <input type="hidden" id="profileArticleEditId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Заголовок статьи (с УДК) *</label>
+                    <input type="text" id="paTitleInput" required placeholder="УДК ... — Название статьи" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Авторы и соавторы *</label>
+                    <input type="text" id="paAuthorsInput" required placeholder="Иванов И.И., Петров П.П." class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Ссылка на публикацию (или сайт)</label>
+                    <input type="text" id="paLinkInput" placeholder="https://elibrary.ru/..." class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Характер публикации *</label>
+                        <select id="paCharacterInput" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                            <option value="РИНЦ">РИНЦ</option>
+                            <option value="Скопус">Скопус (Scopus)</option>
+                            <option value="Абстракт">Абстракт</option>
+                            <option value="Обзорная статья">Обзорная статья</option>
+                            <option value="Оригинальное исследование">Оригинальное исследование</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Статус *</label>
+                        <select id="paStatusInput" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                            <option value="опубликовано">Опубликовано</option>
+                            <option value="в печати">В печати</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Количество символов *</label>
+                        <input type="number" id="paCharsInput" required value="15000" min="100" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Прикрепить файл (PDF/Docx/Txt)</label>
+                        <input type="file" id="paFileInput" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-xl file:border-0 file:bg-slate-800 file:text-teal-400">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeAddProfileArticleModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs">Сохранить в таблицу</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD ACHIEVEMENT MODAL -->
+    <div id="addAchievementModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Добавить достижение / сертификат</h3>
+                <button onclick="closeAddAchievementModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveAchievement(event)" class="space-y-3">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Дата *</label><input type="text" id="achDateInput" required placeholder="Октябрь 2026" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Номинация / Мероприятие *</label><input type="text" id="achNominationInput" required placeholder="Всероссийская олимпиада" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Приз / Место / Описание *</label><input type="text" id="achDescInput" required placeholder="1 место в конкурсе клинических разборов" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Фото сертификата / диплома *</label>
+                    <input type="file" id="achFileInput" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-400">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeAddAchievementModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-xl text-xs">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KNOWLEDGE BASE MODAL -->
+    <div id="kbModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="kbModalTitle" class="text-lg font-bold text-white">Раздел базы знаний</h3>
+                <button onclick="closeKbModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveKbSection(event)" class="space-y-3">
+                <input type="hidden" id="kbEditId">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Заголовок раздела *</label><input type="text" id="kbTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Текст и объяснения *</label><textarea id="kbContentInput" rows="4" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <div class="border-t border-slate-800 pt-3 space-y-3">
+                    <label class="block text-xs font-semibold text-slate-400">Добавить изображения</label>
+                    <input type="file" id="kbImageInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-400">
+                    <input type="text" id="kbImageCaptionInput" placeholder="Подпись к изображению..." class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                </div>
+                <div id="kbModalImagesList" class="space-y-2 pt-2"></div>
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeKbModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GOAL MODAL -->
+    <div id="goalModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="goalModalTitle" class="text-lg font-bold text-white">Направление</h3>
+                <button onclick="closeGoalModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveGoal(event)" class="space-y-3">
+                <input type="hidden" id="goalEditId">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Иконка (FA)</label><input type="text" id="goalIconInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Заголовок *</label><input type="text" id="goalTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Описание *</label><textarea id="goalDescInput" rows="3" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeGoalModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Сохранить</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MULTI GALLERY PHOTO ADD MODAL -->
+    <div id="addGalleryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Добавить фотографии в галерею</h3>
+                <button onclick="closeAddGalleryModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveGalleryPhotos(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Выберите фото (можно несколько сразу) *</label>
+                    <input type="file" id="galleryFilesInput" accept="image/*" multiple required class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Общая подпись для выбранных фото</label>
+                    <input type="text" id="galleryCaptionInput" placeholder="например, Клинический разбор заседания" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeAddGalleryModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Загрузить все</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT CONTACTS -->
+    <div id="contactModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Редактировать контакты</h3>
+                <button onclick="closeContactModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveContactData(event)" class="space-y-3">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Адрес</label><input type="text" id="contactAddressInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Email</label><input type="email" id="contactEmailInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Расписание</label><input type="text" id="contactHoursInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeContactModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Сохранить</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MEMBER MODAL -->
+    <div id="memberModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 id="memberModalTitle" class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-user-pen text-teal-400"></i> Профиль участника</h3>
+                <button onclick="closeMemberModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveMember(event)" class="space-y-4">
+                <input type="hidden" id="memberEditId">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Фотография</label><input type="file" id="memberAvatarInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-400"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">ФИО *</label><input type="text" id="memberNameInput" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Статус / Роль *</label>
+                    <select id="memberStatusInput" onchange="handleRoleSelectChange()" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                        <option value="Руководитель">Руководитель СНК</option>
+                        <option value="Заместитель">Заместитель руководителя</option>
+                        <option value="Активный член" selected>Активный член</option>
+                        <option value="Участник">Участник</option>
+                        <option value="CUSTOM">-- Свой вариант --</option>
+                    </select>
+                </div>
+                <div id="customRoleBlock" class="hidden"><input type="text" id="memberCustomStatusInput" placeholder="Введите роль..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-teal-500 text-white text-xs"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">SPIN-код</label><input type="text" id="memberSpinInput" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Публикации</label><input type="text" id="memberPubsInput" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Активность</label><input type="text" id="memberActivityInput" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Биографическая справка</label><textarea id="memberBioInput" rows="3" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <div id="memberAccountBlock" class="space-y-4 border-t border-slate-800 pt-4">
+                    <p class="text-xs text-slate-400">Для входа в личный кабинет. Не используйте пароль от почты или соцсетей. Заявку подтверждает администратор.</p>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Курс / группа</label><input type="text" id="mmCourse" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Логин * (латиница и цифры)</label><input type="text" id="mmLogin" autocomplete="username" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Пароль * (от 8 знаков)</label><input type="password" id="mmPass" minlength="8" autocomplete="new-password" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                </div>
+                <button type="submit" id="memberSubmitBtn" class="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg">Сохранить профиль</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD FILE IN CLOSED ZONE -->
+    <div id="addFileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Загрузить материал</h3>
+                <button onclick="closeAddFileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveClosedMaterial(event)" class="space-y-3">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Название *</label><input type="text" id="fileTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Категория *</label>
+                    <select id="fileCategoryInput" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                        <option value="Книга">Книга</option><option value="Методичка">Методичка</option><option value="Презентация">Презентация</option>
+                    </select>
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Файл *</label><input type="file" id="fileFileInput" required class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-800 file:text-teal-400"></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeAddFileModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl text-xs">Загрузить</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD SCIENCE PUBLICATION -->
+    <div id="addScienceModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Добавить публикацию клуба</h3>
+                <button onclick="closeAddScienceModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveSciencePublication(event)" class="space-y-3">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Заголовок *</label><input type="text" id="scienceTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Авторы *</label><input type="text" id="scienceAuthorsInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Категория</label><input type="text" id="scienceCategoryInput" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                    <div><label class="block text-xs font-semibold text-slate-400 mb-1">Журнал / Год</label><input type="text" id="scienceJournalInput" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                </div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Файл (PDF/Docx/Txt)</label><input type="file" id="scienceFileInput" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-800 file:text-indigo-400"></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeAddScienceModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold">Сохранить</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div id="lightboxModal" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col items-center justify-center p-4" onclick="closeLightbox()">
+        <img id="lightboxImage" src="" class="max-w-full max-h-[80vh] rounded-2xl object-contain border border-slate-800 shadow-2xl">
+        <p id="lightboxCaption" class="text-white text-sm sm:text-base mt-4 font-semibold text-center bg-slate-900/90 px-4 py-2 rounded-xl border border-slate-800"></p>
+    </div>
+
+    <!-- EVENT MODAL -->
+    <div id="addEventModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <h3 id="eventModalTitle" class="text-lg font-bold text-white">Событие в календаре</h3>
+            <form onsubmit="saveCalendarEvent(event)" class="space-y-3">
+                <input type="hidden" id="eventEditId">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Дата *</label><input type="date" id="eventDateInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Тема *</label><input type="text" id="eventTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Время *</label><input type="text" id="eventTimeInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeAddEventModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Сохранить</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT NEWS MODAL -->
+    <div id="addNewsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-md rounded-3xl p-6 space-y-4">
+            <h3 id="newsModalTitle" class="text-lg font-bold text-white">Новость / Объявление</h3>
+            <form onsubmit="saveNewsItem(event)" class="space-y-3">
+                <input type="hidden" id="newsEditId">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Заголовок *</label><input type="text" id="newsTitleInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Дата *</label><input type="text" id="newsDateInput" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Текст новости *</label><textarea id="newsContentInput" rows="3" required class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <div class="flex justify-end space-x-2 pt-2"><button type="button" onclick="closeAddNewsModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Отмена</button><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold">Опубликовать</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SITE SETTINGS -->
+    <div id="siteSettingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-darkCard border border-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-gears text-teal-400"></i> Настройки сайта</h3>
+                <button onclick="closeSiteSettings()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveSiteSettings(event)" class="space-y-4">
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Сменить герб / Логотип</label><input type="file" id="settingLogoInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-800 file:text-teal-400"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Подпись под гербом на главной</label><input type="text" id="settingEmblemLabel" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Название бренда</label><input type="text" id="settingBrandTitle" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Подзаголовок бренда</label><input type="text" id="settingBrandSubtitle" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Главный заголовок (Hero)</label><input type="text" id="settingHeroTitle" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">Подзаголовок (Hero)</label><textarea id="settingHeroSubtitle" rows="2" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <div><label class="block text-xs font-semibold text-slate-400 mb-1">История и традиции клуба</label><textarea id="settingHistoryText" rows="4" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"></textarea></div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg">Сохранить настройки</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 border-t border-slate-800 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-xs text-slate-500 text-center sm:text-left"><p>&copy; 2026 Студенческий научный клуб по психиатрии, медицинской психологии и аддиктологии.</p></div>
+            <div class="flex items-center space-x-4">
+                <button onclick="promptAdminLogin()" class="text-[11px] text-slate-600 hover:text-teal-400 transition-colors flex items-center gap-1"><i class="fa-solid fa-user-gear"></i> Вход для админа</button>
+                <span id="adminActiveBadge" class="hidden text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">Режим Админа активен</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+
+        let isAdmin = false;
+
+        // ===== ОБЛАКО: общие данные и файлы (Cloudflare Worker + R2) =====
+        const API = 'https://snk-api.zajkovila88.workers.dev';
+        const SYNC_KEYS = ['snk_goals','snk_kb','snk_gallery','snk_contact','snk_members','snk_materials','snk_science','snk_news','snk_events','snk_profile','snk_profile_articles','snk_achievements','snk_brand_title','snk_brand_subtitle','snk_hero_title','snk_hero_subtitle','snk_history_text','snk_emblem_label','snk_logo'];
+        const _lsSet = Storage.prototype.setItem;
+        let adminPw = '';           // пароль живёт только в памяти страницы
+        let cloudMissing = [];      // ключи, которых в облаке ещё нет
+        const pushTimers = {};
+
+        function cloudToast(t) {
+            let el = document.getElementById('cloudToast');
+            if (!el) { el = document.createElement('div'); el.id = 'cloudToast'; el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0D9488;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4)'; document.body.appendChild(el); }
+            el.textContent = t; el.style.display = t ? 'block' : 'none';
+        }
+        // любое сохранение общих данных автоматически уходит в облако (только у админа)
+        Storage.prototype.setItem = function (k, v) {
+            _lsSet.call(this, k, v);
+            if (this === localStorage && SYNC_KEYS.includes(k)) schedulePush(k);
+        };
+        function schedulePush(k) {
+            if (!adminPw) return;
+            clearTimeout(pushTimers[k]);
+            pushTimers[k] = setTimeout(() => pushKey(k), 700);
+        }
+        async function pushKey(k) {
+            const v = localStorage.getItem(k);
+            if (v === null) return;
+            try {
+                const r = await fetch(API + '/api/state/' + k, { method: 'PUT', headers: { 'X-Password': adminPw, 'Content-Type': 'text/plain' }, body: v });
+                if (!r.ok) throw new Error(r.status);
+            } catch (e) { cloudToast('⚠ Не удалось сохранить в облако'); setTimeout(() => cloudToast(''), 4000); }
+        }
+        async function pullCloud() {
+            cloudMissing = [];
+            await Promise.all(SYNC_KEYS.map(async (k) => {
+                try {
+                    const r = await fetch(API + '/api/state/' + k, { cache: 'no-store' });
+                    if (r.ok) _lsSet.call(localStorage, k, await r.text());
+                    else if (r.status === 404) cloudMissing.push(k);
+                } catch (e) {}
+            }));
+        }
+        async function adminLoginCheck(pw) {
+            try {
+                const r = await fetch(API + '/api/whoami', { headers: { 'X-Password': pw } });
+                return (await r.json()).role === 'admin';
+            } catch (e) { return false; }
+        }
+        async function uploadFileToCloud(file) {
+            const q = new URLSearchParams({ kind: 'file', title: file.name || 'file', filename: file.name || 'file' });
+            const r = await fetch(API + '/api/items?' + q, { method: 'POST', headers: { 'X-Password': adminPw, 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+            if (!r.ok) throw new Error(r.status === 413 ? 'файл больше 90 МБ' : 'ошибка ' + r.status);
+            return (await r.json()).fileUrl;
+        }
+        // Все выборы файлов на сайте идут через FileReader: у админа файл уходит в облако,
+        // а в данные сайта записывается короткая ссылка вместо тяжёлого base64.
+        const _readAsDataURL = FileReader.prototype.readAsDataURL;
+        FileReader.prototype.readAsDataURL = function (file) {
+            if (!adminPw || !file) return _readAsDataURL.call(this, file);
+            const self = this;
+            cloudToast('Загрузка файла: ' + (file.name || '') + '…');
+            uploadFileToCloud(file).then((url) => {
+                Object.defineProperty(self, 'result', { value: url, configurable: true });
+                cloudToast('');
+                self.dispatchEvent(new ProgressEvent('load'));
+            }).catch((e) => { cloudToast(''); alert('Не удалось загрузить файл: ' + e.message); });
+        };
+        function renderAllShared() {
+            applySavedSiteSettings(); renderGoals(); renderKbAccordion(); renderGallery(); renderContactData();
+            renderMembers(); renderNews(); renderCalendar(); renderClosedMaterials(); renderSciencePublications();
+            renderProfileData(); renderProfileArticlesTable(); renderAchievements();
+        }
+        window.addEventListener('load', () => { pullCloud().then(renderAllShared); });
+        let currentMonth = 9;
+        let currentYear = 2026;
+        let uploadedAvatarBase64 = '';
+        let uploadedFileBase64 = '';
+        let uploadedFileName = '';
+        let uploadedScienceFileBase64 = '';
+        let uploadedScienceFileName = '';
+        let uploadedProfileAvatarBase64 = '';
+        let currentKbImagesTemp = [];
+        let siteLogoBase64 = '';
+
+        // Initial Data
+        const initialGoals = [
+            { id: 'g1', icon: 'fa-microscope', title: 'Исследования', desc: 'Проведение клинических и аналитических исследований в области фундаментальной и прикладной психиатрии.' },
+            { id: 'g2', icon: 'fa-brain', title: 'Междисциплинарность', desc: 'Интеграция медицинской психологии, нейронаук и клинической практики для комплексного анализа.' },
+            { id: 'g3', icon: 'fa-pills', title: 'Аддиктология', desc: 'Изучение механизмов химических и нехимических зависимостей, способов профилактики и терапии.' },
+            { id: 'g4', icon: 'fa-scroll', title: 'Публикации', desc: 'Помощь студентам в подготовке научных статей, тезисов и выступлениях на рецензируемых конференциях.' }
+        ];
+
+        const initialKb = [
+            {
+                id: 'kb1',
+                title: '1. Как правильно написать статью по психиатрии и медпсихологии?',
+                content: 'Написание качественной статьи начинается с формулировки актуальности и гипотезы. В психиатрии критически важно четко описать критерии включения и исключения пациентов, методики психодиагностики (шкалы HDRS, HARS, MMSE и др.), а также соблюдать биоэтические стандарты.',
+                images: []
+            }
+        ];
+
+        const initialGallery = [
+            { id: 'p1', src: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80', caption: 'Заседание кафедры' },
+            { id: 'p2', src: 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=800&q=80', caption: 'Клинический разбор' }
+        ];
+
+        const initialContact = {
+            address: 'Университетская клиника, Кафедра психиатрии, каб. 402',
+            email: 'snk.psychiatry@university.edu',
+            hours: 'Заседания: Каждый 3-й четверг месяца в 17:00'
+        };
+
+        const initialMembers = [
+            { id: 'm1', name: 'Проф. Петров Василий Сергеевич', status: 'Руководитель', spin: '7845-1209', publications: '120+ статей', activity: 'Общая психиатрия', bio: 'Заведующий кафедрой.', avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=200&q=80' }
+        ];
+
+        const initialMaterials = [
+            { id: 'f1', title: 'Гайдлайн по Клинической Психиатрии 2025', category: 'Книга', fileData: 'data:text/plain;base64,R3VpZGVsaW5lIENvbnRlbnQ=', fileName: 'Гайдлайн_Психиатрия_2025.txt' }
+        ];
+
+        const initialPublications = [
+            { id: 's1', title: 'Особенности тревожно-депрессивных расстройств', authors: 'Иванов А.А., проф. Петров В.С.', category: 'Психиатрия', journal: '2026 г.', fileData: null, fileName: null }
+        ];
+
+        const initialNews = [
+            { id: 'n1', title: 'Открытое заседание СНК: Аддиктология XXI века', date: '15 Октября 2026', content: 'Приглашаем всех членов кружка на заседание.' }
+        ];
+
+        const initialEvents = [
+            { id: 'e1', day: 15, month: 9, year: 2026, title: 'Заседание: Поведенческие аддикции', time: '16:30' }
+        ];
+
+        const initialProfile = {
+            alias: 'Elijah',
+            name: 'Зайков Илья Андреевич',
+            courseGroup: '4 курс, гр. 3',
+            work: 'КГМА им. И.К. Ахунбаева, Кафедра психиатрии',
+            role: 'Исследователь СНК',
+            spin: '4821-9932',
+            elibrary: '1092834',
+            orcid: '0009-0003-4122-1982',
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+        };
+
+        const initialProfileArticles = [
+            { id: 'pa1', title: 'УДК 616.89 — Роль когнитивных фильтров при стрессе', authors: 'Зайков И.А., Казиева А.', link: 'https://elibrary.ru', character: 'РИНЦ', status: 'опубликовано', chars: 18500, fileData: null, fileName: null }
+        ];
+
+        const initialAchievements = [
+            { id: 'ac1', date: 'Март 2026', nomination: 'Олимпиада по психиатрии', desc: '1 место в конкурсе клинических разборов', photo: 'https://images.unsplash.com/photo-1567427017947-545c5f2d16ad?auto=format&fit=crop&w=600&q=80' }
+        ];
+
+        // Init App
+        window.onload = function() {
+            initLocalStorage();
+            applySavedTheme();
+            applySavedSiteSettings();
+            renderGoals();
+            renderKbAccordion();
+            renderGallery();
+            renderContactData();
+            renderMembers();
+            renderNews();
+            renderCalendar();
+            renderClosedMaterials();
+            renderSciencePublications();
+            renderProfileData();
+            renderProfileArticlesTable();
+            renderAchievements();
+            loadClosedNotes();
+        };
+
+        function initLocalStorage() {
+            if (!localStorage.getItem('snk_goals')) localStorage.setItem('snk_goals', JSON.stringify(initialGoals));
+            if (!localStorage.getItem('snk_kb')) localStorage.setItem('snk_kb', JSON.stringify(initialKb));
+            if (!localStorage.getItem('snk_gallery')) localStorage.setItem('snk_gallery', JSON.stringify(initialGallery));
+            if (!localStorage.getItem('snk_contact')) localStorage.setItem('snk_contact', JSON.stringify(initialContact));
+            if (!localStorage.getItem('snk_members')) localStorage.setItem('snk_members', JSON.stringify(initialMembers));
+            if (!localStorage.getItem('snk_materials')) localStorage.setItem('snk_materials', JSON.stringify(initialMaterials));
+            if (!localStorage.getItem('snk_science')) localStorage.setItem('snk_science', JSON.stringify(initialPublications));
+            if (!localStorage.getItem('snk_news')) localStorage.setItem('snk_news', JSON.stringify(initialNews));
+            if (!localStorage.getItem('snk_events')) localStorage.setItem('snk_events', JSON.stringify(initialEvents));
+            if (!localStorage.getItem('snk_profile')) localStorage.setItem('snk_profile', JSON.stringify(initialProfile));
+            if (!localStorage.getItem('snk_profile_articles')) localStorage.setItem('snk_profile_articles', JSON.stringify(initialProfileArticles));
+            if (!localStorage.getItem('snk_achievements')) localStorage.setItem('snk_achievements', JSON.stringify(initialAchievements));
+        }
+
+        function getStoredData(key) { return JSON.parse(localStorage.getItem(key)) || []; }
+        function setStoredData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+        // THEME TOGGLE
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcon();
+        }
+
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (document.documentElement.classList.contains('dark')) icon.className = 'fa-solid fa-sun text-amber-400';
+            else icon.className = 'fa-solid fa-moon text-indigo-600';
+        }
+
+        // SPA SWITCHING
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+            closeSidebar();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            } else { closeSidebar(); }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.add('translate-x-full');
+            backdrop.classList.add('opacity-0');
+            setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+
+        // DIRECT FILE READER (PDF, DOCX, TXT)
+        function openFileReader(fileData, fileName) {
+            const readerModal = document.getElementById('readerModal');
+            const readerTitle = document.getElementById('readerTitle');
+            const readerContent = document.getElementById('readerContent');
+
+            readerTitle.textContent = fileName || 'Просмотр документа';
+            
+            if (!fileData) {
+                readerContent.textContent = 'Файл не загружен или недоступен.';
+            } else if (/^https?:/.test(fileData)) {
+                const n = (fileName || fileData).toLowerCase();
+                if (/\.(png|jpe?g|gif|webp)$/.test(n)) readerContent.innerHTML = `<img src="${fileData}" class="max-w-full mx-auto rounded-xl">`;
+                else if (/\.(pdf|txt)$/.test(n)) readerContent.innerHTML = `<iframe src="${fileData}" class="w-full h-full rounded-xl border border-slate-800" frameborder="0"></iframe>`;
+                else readerContent.innerHTML = `<div class="text-center py-12 space-y-4"><p>Прямой просмотр данного типа файлов в браузере ограничен.</p><a href="${fileData}" target="_blank" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl inline-block">Скачать файл</a></div>`;
+            } else if (fileData.startsWith('data:text')) {
+                try {
+                    const base64Part = fileData.split(',')[1];
+                    const decoded = atob(base64Part);
+                    readerContent.textContent = decoded;
+                } catch(e) {
+                    readerContent.textContent = 'Ошибка декодирования текстового файла.';
+                }
+            } else if (fileData.startsWith('data:application/pdf')) {
+                readerContent.innerHTML = `<iframe src="${fileData}" class="w-full h-full rounded-xl border border-slate-800" frameborder="0"></iframe>`;
+            } else {
+                readerContent.innerHTML = `<div class="text-center py-12 space-y-4"><p>Прямой просмотр данного типа файлов в браузере ограничен.</p><a href="${fileData}" download="${fileName || 'document'}" class="px-4 py-2 bg-teal-500 text-slate-950 font-bold rounded-xl inline-block">Скачать файл</a></div>`;
+            }
+
+            readerModal.classList.remove('hidden');
+        }
+
+        function closeReaderModal() {
+            document.getElementById('readerModal').classList.add('hidden');
+        }
+
+        // PERSONAL PROFILE LOGIC
+        function renderProfileData() {
+            const profile = JSON.parse(localStorage.getItem('snk_profile')) || initialProfile;
+            document.getElementById('profileAvatarDisplay').src = profile.avatar;
+            document.getElementById('profileAliasDisplay').textContent = '@' + profile.alias;
+            document.getElementById('profileNameDisplay').textContent = profile.name;
+            document.getElementById('profileRoleDisplay').textContent = profile.role;
+            document.getElementById('profileCourseGroupDisplay').textContent = profile.courseGroup;
+            document.getElementById('profileWorkDisplay').textContent = profile.work;
+            document.getElementById('profileSpinDisplay').textContent = profile.spin || '—';
+            document.getElementById('profileElibraryDisplay').textContent = profile.elibrary || '—';
+            document.getElementById('profileOrcidDisplay').textContent = profile.orcid || '—';
+        }
+
+        function openEditProfileModal() {
+            const profile = JSON.parse(localStorage.getItem('snk_profile')) || initialProfile;
+            document.getElementById('profileAliasInput').value = profile.alias;
+            document.getElementById('profileNameInput').value = profile.name;
+            document.getElementById('profileCourseGroupInput').value = profile.courseGroup;
+            document.getElementById('profileWorkInput').value = profile.work;
+            document.getElementById('profileSpinInput').value = profile.spin;
+            document.getElementById('profileElibraryInput').value = profile.elibrary;
+            document.getElementById('profileOrcidInput').value = profile.orcid;
+            
+            const roleSelect = document.getElementById('profileRoleSelect');
+            const customRoleBox = document.getElementById('profileCustomRoleBox');
+            const fixedRoles = ['Исследователь СНК', 'Аспирант', 'Ординатор', 'Студент-кружковец'];
+            if (fixedRoles.includes(profile.role)) {
+                roleSelect.value = profile.role;
+                customRoleBox.classList.add('hidden');
+            } else {
+                roleSelect.value = 'CUSTOM';
+                customRoleBox.classList.remove('hidden');
+                document.getElementById('profileCustomRoleInput').value = profile.role;
+            }
+
+            uploadedProfileAvatarBase64 = profile.avatar;
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() { document.getElementById('editProfileModal').classList.add('hidden'); }
+
+        function handleProfileRoleChange() {
+            const val = document.getElementById('profileRoleSelect').value;
+            const box = document.getElementById('profileCustomRoleBox');
+            if (val === 'CUSTOM') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        document.getElementById('profileAvatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedProfileAvatarBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function saveProfileData(e) {
+            e.preventDefault();
+            let role = document.getElementById('profileRoleSelect').value;
+            if (role === 'CUSTOM') role = document.getElementById('profileCustomRoleInput').value.trim() || 'Ученый';
+
+            const profile = {
+                alias: document.getElementById('profileAliasInput').value,
+                name: document.getElementById('profileNameInput').value,
+                courseGroup: document.getElementById('profileCourseGroupInput').value,
+                work: document.getElementById('profileWorkInput').value,
+                role: role,
+                spin: document.getElementById('profileSpinInput').value,
+                elibrary: document.getElementById('profileElibraryInput').value,
+                orcid: document.getElementById('profileOrcidInput').value,
+                avatar: uploadedProfileAvatarBase64 || initialProfile.avatar
+            };
+
+            localStorage.setItem('snk_profile', JSON.stringify(profile));
+            renderProfileData();
+            closeEditProfileModal();
+        }
+
+        // PROFILE ARTICLES TABLE & CALCULATIONS
+        function renderProfileArticlesTable() {
+            const articles = getStoredData('snk_profile_articles');
+            const tbody = document.getElementById('profileArticlesTableBody');
+            const summary = document.getElementById('profileTableSummary');
+            tbody.innerHTML = '';
+
+            let totalChars = 0;
+            let counts = { published: 0, inPress: 0, rinc: 0, scopus: 0, pubRinc: 0, pubScopus: 0 };
+
+            articles.forEach((art, idx) => {
+                const chars = parseInt(art.chars) || 0;
+                totalChars += chars;
+
+                if (art.status === 'опубликовано') counts.published++;
+                if (art.status === 'в печати') counts.inPress++;
+                if (art.character === 'РИНЦ') {
+                    counts.rinc++;
+                    if (art.status === 'опубликовано') counts.pubRinc++;
+                }
+                if (art.character === 'Скопус') {
+                    counts.scopus++;
+                    if (art.status === 'опубликовано') counts.pubScopus++;
+                }
+
+                // Standard Times New Roman 14 pt, spacing 1.0, margins 1cm -> ~1800 characters per A4 page
+                const pagesA4 = (chars / 1800).toFixed(2);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold">${idx + 1}</td>
+                    <td class="p-3.5 font-semibold text-white">${art.title}</td>
+                    <td class="p-3.5 text-slate-300">${art.authors}</td>
+                    <td class="p-3.5"><a href="${art.link || '#'}" target="_blank" class="text-teal-400 hover:underline truncate max-w-[120px] block">${art.link ? 'Ссылка' : '—'}</a></td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300">${art.character}</span></td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${art.status === 'опубликовано' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${art.status}</span></td>
+                    <td class="p-3.5 text-right font-mono">${chars.toLocaleString()}</td>
+                    <td class="p-3.5 text-right font-mono text-teal-400">${pagesA4}</td>
+                    <td class="p-3.5 text-center space-x-2">
+                        ${art.fileData ? `<button onclick="openFileReader('${art.fileData}', '${art.fileName}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-lg" title="Читать файл"><i class="fa-solid fa-book-open"></i></button>` : ''}
+                        <button onclick="editProfileArticle('${art.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg" title="Редактировать"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteProfileArticle('${art.id}')" class="p-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 rounded-lg" title="Удалить"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Formulas: 1 author sheet (авторский лист) = 40,000 characters
+            const authorSheets = (totalChars / 40000).toFixed(2);
+            const totalPagesA4 = (totalChars / 1800).toFixed(1);
+
+            summary.innerHTML = `
+                <div><span class="text-slate-500 block">Всего статей:</span> <span class="text-white text-base">${articles.length}</span></div>
+                <div><span class="text-slate-500 block">Опубликовано / В печати:</span> <span class="text-emerald-400 text-base">${counts.published}</span> / <span class="text-amber-400 text-base">${counts.inPress}</span></div>
+                <div><span class="text-slate-500 block">РИНЦ / Скопус:</span> <span class="text-indigo-400 text-base">${counts.rinc}</span> / <span class="text-purple-400 text-base">${counts.scopus}</span></div>
+                <div><span class="text-slate-500 block">Опубл. РИНЦ / Скопус:</span> <span class="text-teal-400 text-base">${counts.pubRinc}</span> / <span class="text-teal-400 text-base">${counts.pubScopus}</span></div>
+                <div><span class="text-slate-500 block">Печатных страниц А4:</span> <span class="text-white text-base font-mono">${totalPagesA4}</span></div>
+                <div><span class="text-slate-500 block">Авторских листов:</span> <span class="text-amber-400 text-base font-mono">${authorSheets}</span></div>
+            `;
+        }
+
+        function openAddProfileArticleModal(art = null) {
+            document.getElementById('profileArticleEditId').value = art ? art.id : '';
+            document.getElementById('paTitleInput').value = art ? art.title : '';
+            document.getElementById('paAuthorsInput').value = art ? art.authors : '';
+            document.getElementById('paLinkInput').value = art ? art.link || '' : '';
+            document.getElementById('paCharacterInput').value = art ? art.character : 'РИНЦ';
+            document.getElementById('paStatusInput').value = art ? art.status : 'опубликовано';
+            document.getElementById('paCharsInput').value = art ? art.chars : '15000';
+            uploadedScienceFileBase64 = art ? art.fileData || '' : '';
+            uploadedScienceFileName = art ? art.fileName || '' : '';
+            document.getElementById('addProfileArticleModal').classList.remove('hidden');
+        }
+
+        function closeAddProfileArticleModal() { document.getElementById('addProfileArticleModal').classList.add('hidden'); }
+
+        document.getElementById('paFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadedScienceFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedScienceFileBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function saveProfileArticle(e) {
+            e.preventDefault();
+            const articles = getStoredData('snk_profile_articles');
+            const editId = document.getElementById('profileArticleEditId').value;
+
+            const artData = {
+                id: editId || 'pa_' + Date.now(),
+                title: document.getElementById('paTitleInput').value,
+                authors: document.getElementById('paAuthorsInput').value,
+                link: document.getElementById('paLinkInput').value,
+                character: document.getElementById('paCharacterInput').value,
+                status: document.getElementById('paStatusInput').value,
+                chars: parseInt(document.getElementById('paCharsInput').value) || 10000,
+                fileData: uploadedScienceFileBase64 || null,
+                fileName: uploadedScienceFileName || null
+            };
+
+            if (editId) {
+                const idx = articles.findIndex(a => a.id === editId);
+                if (idx !== -1) articles[idx] = artData;
+            } else {
+                articles.push(artData);
+                // Also mirror to global science publications if desired
+                const sciPubs = getStoredData('snk_science');
+                sciPubs.push({
+                    id: 's_' + Date.now(),
+                    title: artData.title,
+                    authors: artData.authors,
+                    category: artData.character,
+                    journal: '2026 г.',
+                    fileData: artData.fileData,
+                    fileName: artData.fileName
+                });
+                setStoredData('snk_science', sciPubs);
+                renderSciencePublications();
+            }
+
+            setStoredData('snk_profile_articles', articles);
+            renderProfileArticlesTable();
+            closeAddProfileArticleModal();
+        }
+
+        function editProfileArticle(id) {
+            const articles = getStoredData('snk_profile_articles');
+            const art = articles.find(a => a.id === id);
+            if (art) openAddProfileArticleModal(art);
+        }
+
+        function deleteProfileArticle(id) {
+            if (confirm('Удалить эту статью из вашей таблицы?')) {
+                let articles = getStoredData('snk_profile_articles');
+                articles = articles.filter(a => a.id !== id);
+                setStoredData('snk_profile_articles', articles);
+                renderProfileArticlesTable();
+            }
+        }
+
+        // ACHIEVEMENTS
+        function renderAchievements() {
+            const list = getStoredData('snk_achievements');
+            const container = document.getElementById('profileAchievementsContainer');
+            container.innerHTML = '';
+
+            list.forEach(ac => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard border border-slate-800 rounded-2xl overflow-hidden shadow group';
+                card.innerHTML = `
+                    <img src="${ac.photo}" class="w-full h-36 object-cover cursor-pointer group-hover:scale-105 transition-transform" onclick="openLightbox('${ac.photo}', '${ac.nomination}: ${ac.desc}')">
+                    <div class="p-4 space-y-1">
+                        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">${ac.date}</span>
+                        <h4 class="font-bold text-white text-sm">${ac.nomination}</h4>
+                        <p class="text-xs text-slate-400">${ac.desc}</p>
+                        ${isAdmin ? `<button onclick="deleteAchievement('${ac.id}')" class="mt-2 text-rose-400 text-xs hover:underline"><i class="fa-solid fa-trash"></i> Удалить</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openAddAchievementModal() { document.getElementById('addAchievementModal').classList.remove('hidden'); }
+        function closeAddAchievementModal() { document.getElementById('addAchievementModal').classList.add('hidden'); }
+
+        let uploadedAchievementPhoto = '';
+        document.getElementById('achFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedAchievementPhoto = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function saveAchievement(e) {
+            e.preventDefault();
+            const list = getStoredData('snk_achievements');
+            list.push({
+                id: 'ac_' + Date.now(),
+                date: document.getElementById('achDateInput').value,
+                nomination: document.getElementById('achNominationInput').value,
+                desc: document.getElementById('achDescInput').value,
+                photo: uploadedAchievementPhoto || 'https://images.unsplash.com/photo-1567427017947-545c5f2d16ad?auto=format&fit=crop&w=600&q=80'
+            });
+            setStoredData('snk_achievements', list);
+            renderAchievements();
+            closeAddAchievementModal();
+            e.target.reset();
+        }
+
+        function deleteAchievement(id) {
+            let list = getStoredData('snk_achievements');
+            list = list.filter(a => a.id !== id);
+            setStoredData('snk_achievements', list);
+            renderAchievements();
+        }
+
+        // KNOWLEDGE BASE ACCORDION WITH MULTIPLE IMAGES
+        function renderKbAccordion() {
+            const kbList = getStoredData('snk_kb');
+            const container = document.getElementById('kbAccordionContainer');
+            container.innerHTML = '';
+
+            kbList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'border border-slate-800 rounded-2xl bg-darkCard overflow-hidden';
+                
+                let imagesHtml = '';
+                if (item.images && item.images.length > 0) {
+                    imagesHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">`;
+                    item.images.forEach((imgObj, idx) => {
+                        imagesHtml += `
+                            <div class="relative group bg-slate-900 border border-slate-800 rounded-2xl p-2 space-y-2">
+                                <img src="${imgObj.src}" alt="${imgObj.caption || 'Иллюстрация'}" class="w-full h-48 sm:h-56 object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity shadow" onclick="openLightbox('${imgObj.src}', '${imgObj.caption || ''}')">
+                                ${imgObj.caption ? `<p class="text-[11px] text-slate-300 font-medium px-1 italic">${imgObj.caption}</p>` : ''}
+                                ${isAdmin ? `
+                                    <button onclick="deleteKbImage('${item.id}', ${idx})" class="absolute top-4 right-4 p-1.5 bg-rose-600 text-white rounded-lg text-xs shadow">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                    imagesHtml += `</div>`;
+                }
+
+                card.innerHTML = `
+                    <button onclick="toggleAccordion('${item.id}')" class="w-full p-5 text-left font-semibold text-white flex items-center justify-between hover:bg-slate-800/50">
+                        <span>${item.title}</span>
+                        <i id="${item.id}-icon" class="fa-solid fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div id="${item.id}" class="hidden p-5 pt-0 text-xs text-slate-300 leading-relaxed border-t border-slate-800/50 space-y-3 mt-2">
+                        <p class="whitespace-pre-line mt-2">${item.content}</p>
+                        ${imagesHtml}
+                        ${isAdmin ? `
+                            <div class="flex items-center space-x-2 pt-3 border-t border-slate-800">
+                                <button onclick="editKbSection('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-lg font-bold">Редактировать</button>
+                                <button onclick="deleteKbSection('${item.id}')" class="px-2.5 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 rounded-lg font-bold">Удалить раздел</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openKbModal(item = null) {
+            document.getElementById('kbEditId').value = item ? item.id : '';
+            document.getElementById('kbTitleInput').value = item ? item.title : '';
+            document.getElementById('kbContentInput').value = item ? item.content : '';
+            currentKbImagesTemp = item && item.images ? [...item.images] : [];
+            renderKbModalImages();
+            document.getElementById('kbModalTitle').textContent = item ? 'Редактировать раздел знаний' : 'Добавить раздел знаний';
+            document.getElementById('kbModal').classList.remove('hidden');
+        }
+
+        function closeKbModal() { document.getElementById('kbModal').classList.add('hidden'); currentKbImagesTemp = []; }
+
+        function renderKbModalImages() {
+            const list = document.getElementById('kbModalImagesList');
+            list.innerHTML = '';
+            if (currentKbImagesTemp.length > 0) {
+                list.innerHTML = '<p class="text-xs font-semibold text-slate-400">Прикрепленные изображения:</p>';
+                currentKbImagesTemp.forEach((img, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800 text-xs';
+                    row.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <img src="${img.src}" class="w-10 h-10 rounded-lg object-cover">
+                            <span class="text-slate-300 truncate max-w-[200px]">${img.caption || 'Без подписи'}</span>
+                        </div>
+                        <button type="button" onclick="removeTempKbImage(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-xmark"></i></button>
+                    `;
+                    list.appendChild(row);
+                });
+            }
+        }
+
+        function removeTempKbImage(index) { currentKbImagesTemp.splice(index, 1); renderKbModalImages(); }
+
+        document.getElementById('kbImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const caption = document.getElementById('kbImageCaptionInput').value;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    currentKbImagesTemp.push({ src: evt.target.result, caption: caption });
+                    document.getElementById('kbImageInput').value = '';
+                    document.getElementById('kbImageCaptionInput').value = '';
+                    renderKbModalImages();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function saveKbSection(e) {
+            e.preventDefault();
+            const kbList = getStoredData('snk_kb');
+            const editId = document.getElementById('kbEditId').value;
+            const kbData = {
+                id: editId || 'kb_' + Date.now(),
+                title: document.getElementById('kbTitleInput').value,
+                content: document.getElementById('kbContentInput').value,
+                images: currentKbImagesTemp
+            };
+            if (editId) {
+                const idx = kbList.findIndex(k => k.id === editId);
+                if (idx !== -1) kbList[idx] = kbData;
+            } else { kbList.push(kbData); }
+            setStoredData('snk_kb', kbList);
+            renderKbAccordion();
+            closeKbModal();
+        }
+
+        function editKbSection(id) { const item = getStoredData('snk_kb').find(k => k.id === id); if (item) openKbModal(item); }
+        function deleteKbSection(id) {
+            if (confirm('Удалить весь раздел знаний?')) {
+                setStoredData('snk_kb', getStoredData('snk_kb').filter(k => k.id !== id));
+                renderKbAccordion();
+            }
+        }
+        function deleteKbImage(kbId, imgIndex) {
+            if (confirm('Удалить это изображение?')) {
+                const kbList = getStoredData('snk_kb');
+                const kb = kbList.find(k => k.id === kbId);
+                if (kb && kb.images) { kb.images.splice(imgIndex, 1); setStoredData('snk_kb', kbList); renderKbAccordion(); }
+            }
+        }
+
+        // GOALS
+        function renderGoals() {
+            const goals = getStoredData('snk_goals');
+            const grid = document.getElementById('goalsGrid');
+            grid.innerHTML = '';
+            goals.forEach(g => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between relative';
+                card.innerHTML = `
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-xl mb-4"><i class="fa-solid ${g.icon}"></i></div>
+                        <h3 class="font-semibold text-lg text-white mb-2">${g.title}</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">${g.desc}</p>
+                    </div>
+                    ${isAdmin ? `<div class="flex items-center space-x-2 pt-4 mt-4 border-t border-slate-800"><button onclick="editGoal('${g.id}')" class="px-2.5 py-1 bg-slate-800 text-teal-400 rounded-lg text-xs font-bold">Редактировать</button><button onclick="deleteGoal('${g.id}')" class="px-2.5 py-1 bg-rose-600/20 text-rose-300 rounded-lg text-xs font-bold">Удалить</button></div>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+        function openGoalModal(goal = null) {
+            document.getElementById('goalEditId').value = goal ? goal.id : '';
+            document.getElementById('goalIconInput').value = goal ? goal.icon : 'fa-microscope';
+            document.getElementById('goalTitleInput').value = goal ? goal.title : '';
+            document.getElementById('goalDescInput').value = goal ? goal.desc : '';
+            document.getElementById('goalModalTitle').textContent = goal ? 'Редактировать направление' : 'Добавить направление';
+            document.getElementById('goalModal').classList.remove('hidden');
+        }
+        function closeGoalModal() { document.getElementById('goalModal').classList.add('hidden'); }
+        function editGoal(id) { const g = getStoredData('snk_goals').find(item => item.id === id); if (g) openGoalModal(g); }
+        function saveGoal(e) {
+            e.preventDefault();
+            const goals = getStoredData('snk_goals');
+            const editId = document.getElementById('goalEditId').value;
+            const data = { id: editId || 'g_' + Date.now(), icon: document.getElementById('goalIconInput').value, title: document.getElementById('goalTitleInput').value, desc: document.getElementById('goalDescInput').value };
+            if (editId) { const idx = goals.findIndex(g => g.id === editId); if (idx !== -1) goals[idx] = data; } else { goals.push(data); }
+            setStoredData('snk_goals', goals); renderGoals(); closeGoalModal();
+        }
+        function deleteGoal(id) { setStoredData('snk_goals', getStoredData('snk_goals').filter(g => g.id !== id)); renderGoals(); }
+
+        // GALLERY WITH MULTI UPLOAD
+        function renderGallery() {
+            const gallery = getStoredData('snk_gallery');
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            gallery.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-800 hover:scale-105 transition-transform group';
+                card.innerHTML = `
+                    <img src="${item.src}" alt="${item.caption || 'Фото'}" class="w-full h-40 object-cover cursor-pointer" onclick="openLightbox('${item.src}', '${item.caption || ''}')">
+                    ${isAdmin ? `<button onclick="deleteGalleryPhoto('${item.id}')" class="absolute top-2 right-2 p-1.5 bg-rose-600 text-white rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+        function openAddGalleryModal() { document.getElementById('addGalleryModal').classList.remove('hidden'); }
+        function closeAddGalleryModal() { document.getElementById('addGalleryModal').classList.add('hidden'); }
+
+        function saveGalleryPhotos(e) {
+            e.preventDefault();
+            const input = document.getElementById('galleryFilesInput');
+            const files = input.files;
+            const caption = document.getElementById('galleryCaptionInput').value;
+            if (!files || files.length === 0) return;
+
+            const gallery = getStoredData('snk_gallery');
+            let loadedCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    gallery.push({
+                        id: 'p_' + Date.now() + '_' + Math.random(),
+                        src: evt.target.result,
+                        caption: caption
+                    });
+                    loadedCount++;
+                    if (loadedCount === files.length) {
+                        setStoredData('snk_gallery', gallery);
+                        renderGallery();
+                        closeAddGalleryModal();
+                        e.target.reset();
+                    }
+                };
+                reader.readAsDataURL(files[i]);
+            }
+        }
+
+        function deleteGalleryPhoto(id) {
+            setStoredData('snk_gallery', getStoredData('snk_gallery').filter(item => item.id !== id));
+            renderGallery();
+        }
+
+        // CONTACTS
+        function renderContactData() {
+            const contact = JSON.parse(localStorage.getItem('snk_contact')) || initialContact;
+            document.getElementById('contactDeptAddress').textContent = contact.address;
+            document.getElementById('contactDeptEmail').textContent = contact.email;
+            document.getElementById('contactDeptHours').textContent = contact.hours;
+        }
+        function openContactModal() {
+            const contact = JSON.parse(localStorage.getItem('snk_contact')) || initialContact;
+            document.getElementById('contactAddressInput').value = contact.address;
+            document.getElementById('contactEmailInput').value = contact.email;
+            document.getElementById('contactHoursInput').value = contact.hours;
+            document.getElementById('contactModal').classList.remove('hidden');
+        }
+        function closeContactModal() { document.getElementById('contactModal').classList.add('hidden'); }
+        function saveContactData(e) {
+            e.preventDefault();
+            const contact = { address: document.getElementById('contactAddressInput').value, email: document.getElementById('contactEmailInput').value, hours: document.getElementById('contactHoursInput').value };
+            localStorage.setItem('snk_contact', JSON.stringify(contact));
+            renderContactData(); closeContactModal();
+        }
+
+        // SITE SETTINGS WITH EMBLEM LABEL
+        async function promptSiteSettings() {
+            const pw = prompt('Пароль админа:'); if (pw && await adminLoginCheck(pw)) { closeSidebar(); openSiteSettings(); } else { alert('Неверный пароль!'); }
+        }
+        function openSiteSettings() {
+            document.getElementById('settingBrandTitle').value = localStorage.getItem('snk_brand_title') || 'СНК Психиатрии';
+            document.getElementById('settingBrandSubtitle').value = localStorage.getItem('snk_brand_subtitle') || 'Медпсихологии и Аддиктологии';
+            document.getElementById('settingHeroTitle').value = localStorage.getItem('snk_hero_title') || 'Изучаем тайны разума и поведения';
+            document.getElementById('settingHeroSubtitle').value = localStorage.getItem('snk_hero_subtitle') || 'Студенческий научный клуб...';
+            document.getElementById('settingHistoryText').value = localStorage.getItem('snk_history_text') || 'Наш Студенческий научный клуб...';
+            document.getElementById('settingEmblemLabel').value = localStorage.getItem('snk_emblem_label') || 'Официальный герб';
+            document.getElementById('siteSettingsModal').classList.remove('hidden');
+        }
+        function closeSiteSettings() { document.getElementById('siteSettingsModal').classList.add('hidden'); }
+
+        document.getElementById('settingLogoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { siteLogoBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function saveSiteSettings(e) {
+            e.preventDefault();
+            localStorage.setItem('snk_brand_title', document.getElementById('settingBrandTitle').value);
+            localStorage.setItem('snk_brand_subtitle', document.getElementById('settingBrandSubtitle').value);
+            localStorage.setItem('snk_hero_title', document.getElementById('settingHeroTitle').value);
+            localStorage.setItem('snk_hero_subtitle', document.getElementById('settingHeroSubtitle').value);
+            localStorage.setItem('snk_history_text', document.getElementById('settingHistoryText').value);
+            localStorage.setItem('snk_emblem_label', document.getElementById('settingEmblemLabel').value);
+            if (siteLogoBase64) localStorage.setItem('snk_logo', siteLogoBase64);
+            applySavedSiteSettings();
+            closeSiteSettings();
+            alert('Настройки сохранены!');
+        }
+
+        function applySavedSiteSettings() {
+            if (localStorage.getItem('snk_brand_title')) document.getElementById('brandTitleText').textContent = localStorage.getItem('snk_brand_title');
+            if (localStorage.getItem('snk_brand_subtitle')) document.getElementById('brandSubtitleText').textContent = localStorage.getItem('snk_brand_subtitle');
+            if (localStorage.getItem('snk_history_text')) document.getElementById('homeHistoryText').textContent = localStorage.getItem('snk_history_text');
+            if (localStorage.getItem('snk_emblem_label')) document.getElementById('emblemLabelDisplay').textContent = localStorage.getItem('snk_emblem_label');
+            const savedLogo = localStorage.getItem('snk_logo');
+            if (savedLogo) {
+                document.getElementById('siteLogoImg').src = savedLogo;
+                document.getElementById('heroLogoDisplay').src = savedLogo;
+            }
+        }
+
+        // MEMBERS
+        function renderMembers() {
+            const members = getStoredData('snk_members');
+            const grid = document.getElementById('membersGrid');
+            grid.innerHTML = '';
+            members.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard border border-slate-800 rounded-3xl p-6 space-y-4';
+                card.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <img src="${m.avatar}" class="w-16 h-16 rounded-full object-cover border-2 border-teal-400">
+                        <div>
+                            <h3 class="font-bold text-white text-base">${m.name}</h3>
+                            <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">${m.status}</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-300 space-y-1">
+                        ${m.spin ? `<p>SPIN: ${m.spin}</p>` : ''}
+                        ${m.bio ? `<p class="text-slate-400 line-clamp-3">${m.bio}</p>` : ''}
+                    </div>
+                    ${isAdmin ? `<button onclick="deleteMember('${m.id}')" class="text-rose-400 text-xs hover:underline"><i class="fa-solid fa-trash"></i> Удалить</button>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+            updateMemberCounter(members.length);
+        }
+        function updateMemberCounter(c) { const el = document.getElementById('memberCount'); if (el) el.textContent = c; }
+        function openMemberModal() { document.getElementById('memberModal').classList.remove('hidden'); }
+        function closeMemberModal() { document.getElementById('memberModal').classList.add('hidden'); }
+        function handleRoleSelectChange() {
+            const val = document.getElementById('memberStatusInput').value;
+            const block = document.getElementById('customRoleBlock');
+            if (val === 'CUSTOM') block.classList.remove('hidden'); else block.classList.add('hidden');
+        }
+        document.getElementById('memberAvatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedAvatarBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+        function saveMember(e) {
+            e.preventDefault();
+            if (!isAdmin) return registerMember(e);
+            const members = getStoredData('snk_members');
+            let status = document.getElementById('memberStatusInput').value;
+            if (status === 'CUSTOM') status = document.getElementById('memberCustomStatusInput').value || 'Участник';
+            members.push({
+                id: 'm_' + Date.now(),
+                name: document.getElementById('memberNameInput').value,
+                status: status,
+                spin: document.getElementById('memberSpinInput').value,
+                bio: document.getElementById('memberBioInput').value,
+                avatar: uploadedAvatarBase64 || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+            });
+            setStoredData('snk_members', members); renderMembers(); closeMemberModal();
+        }
+        function deleteMember(id) { setStoredData('snk_members', getStoredData('snk_members').filter(m => m.id !== id)); renderMembers(); }
+
+        // CLOSED ZONE MATERIALS
+        function renderClosedMaterials() {
+            const materials = getStoredData('snk_materials');
+            const grid = document.getElementById('closedMaterialsGrid');
+            grid.innerHTML = '';
+            materials.forEach(mat => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard border border-slate-800 p-5 rounded-2xl flex items-center justify-between';
+                card.innerHTML = `
+                    <div><h4 class="font-semibold text-white text-sm">${mat.title}</h4><p class="text-xs text-slate-400">${mat.category}</p></div>
+                    <div class="flex items-center space-x-2">
+                        ${mat.fileData ? `<button onclick="openFileReader('${mat.fileData}', '${mat.fileName}')" class="px-3 py-2 bg-slate-800 text-teal-400 text-xs font-semibold rounded-xl">Читать</button>` : ''}
+                        <a href="${mat.fileData || '#'}" download="${mat.fileName || 'file'}" class="px-3 py-2 bg-slate-800 text-teal-400 text-xs font-semibold rounded-xl"><i class="fa-solid fa-download"></i></a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        function openAddFileModal() { document.getElementById('addFileModal').classList.remove('hidden'); }
+        function closeAddFileModal() { document.getElementById('addFileModal').classList.add('hidden'); }
+        document.getElementById('fileFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadedFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedFileBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+        function saveClosedMaterial(e) {
+            e.preventDefault();
+            const mats = getStoredData('snk_materials');
+            mats.push({ id: 'f_' + Date.now(), title: document.getElementById('fileTitleInput').value, category: document.getElementById('fileCategoryInput').value, fileData: uploadedFileBase64, fileName: uploadedFileName });
+            setStoredData('snk_materials', mats); renderClosedMaterials(); closeAddFileModal();
+        }
+
+        // SCIENCE PUBLICATIONS
+        function renderSciencePublications() {
+            const science = getStoredData('snk_science');
+            const container = document.getElementById('sciencePubsContainer');
+            container.innerHTML = '';
+            science.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard border border-slate-800 p-6 rounded-2xl space-y-3';
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300">${s.category || 'Наука'}</span>
+                        <h4 class="text-base font-semibold text-white">${s.title}</h4>
+                        <p class="text-slate-400 text-xs">Авторы: ${s.authors}</p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+                        ${s.fileData ? `<button onclick="openFileReader('${s.fileData}', '${s.fileName}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-book-open"></i> Читать статью</button>` : '<span class="text-xs text-slate-500">Файл не прикреплен</span>'}
+                        ${isAdmin ? `<button onclick="deleteSciencePublication('${s.id}')" class="text-rose-400 text-xs"><i class="fa-solid fa-trash"></i> Удалить</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        function openAddScienceModal() { document.getElementById('addScienceModal').classList.remove('hidden'); }
+        function closeAddScienceModal() { document.getElementById('addScienceModal').classList.add('hidden'); }
+        document.getElementById('scienceFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadedScienceFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(evt) { uploadedScienceFileBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+        function saveSciencePublication(e) {
+            e.preventDefault();
+            const sci = getStoredData('snk_science');
+            sci.push({ id: 's_' + Date.now(), title: document.getElementById('scienceTitleInput').value, authors: document.getElementById('scienceAuthorsInput').value, category: document.getElementById('scienceCategoryInput').value || 'Психиатрия', journal: document.getElementById('scienceJournalInput').value || '2026 г.', fileData: uploadedScienceFileBase64, fileName: uploadedScienceFileName });
+            setStoredData('snk_science', sci); renderSciencePublications(); closeAddScienceModal();
+        }
+        function deleteSciencePublication(id) { setStoredData('snk_science', getStoredData('snk_science').filter(s => s.id !== id)); renderSciencePublications(); }
+
+        // CALENDAR
+        const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+        function changeMonth(delta) { currentMonth += delta; if (currentMonth < 0) { currentMonth = 11; currentYear--; } if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+        function renderCalendar() {
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            const daysContainer = document.getElementById('calendarDays');
+            const eventsListContainer = document.getElementById('calendarEventsList');
+            daysContainer.innerHTML = ''; eventsListContainer.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const events = getStoredData('snk_events');
+            let startingOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            for (let i = 0; i < startingOffset; i++) daysContainer.appendChild(document.createElement('div'));
+            for (let day = 1; day <= totalDays; day++) {
+                const dayEvents = events.filter(e => e.day === day && e.month === currentMonth && e.year === currentYear);
+                const dayCell = document.createElement('div');
+                dayCell.className = `h-10 rounded-xl flex flex-col items-center justify-center text-xs font-semibold ${dayEvents.length > 0 ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-900/50 text-slate-300'}`;
+                dayCell.textContent = day;
+                daysContainer.appendChild(dayCell);
+            }
+
+            const monthEvents = events.filter(e => e.month === currentMonth && e.year === currentYear);
+            if (monthEvents.length === 0) eventsListContainer.innerHTML = '<p class="text-xs text-slate-500 text-center">Заседаний в этом месяце не запланировано</p>';
+            else {
+                monthEvents.forEach(ev => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs';
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-3"><span class="px-2 py-1 rounded-lg bg-teal-500/10 text-teal-400 font-bold">${ev.day} ${monthNames[ev.month].substring(0, 3)}</span><div><h5 class="font-bold text-white">${ev.title}</h5><p class="text-[10px] text-slate-400">Время: ${ev.time}</p></div></div>
+                        ${isAdmin ? `<button onclick="deleteCalendarEvent('${ev.id}')" class="p-1.5 bg-rose-600/20 text-rose-300 rounded-lg"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    `;
+                    eventsListContainer.appendChild(item);
+                });
+            }
+        }
+        function openAddEventModal() { document.getElementById('addEventModal').classList.remove('hidden'); }
+        function closeAddEventModal() { document.getElementById('addEventModal').classList.add('hidden'); }
+        function saveCalendarEvent(e) {
+            e.preventDefault();
+            const dateVal = new Date(document.getElementById('eventDateInput').value);
+            const events = getStoredData('snk_events');
+            events.push({ id: 'e_' + Date.now(), day: dateVal.getDate(), month: dateVal.getMonth(), year: dateVal.getFullYear(), title: document.getElementById('eventTitleInput').value, time: document.getElementById('eventTimeInput').value });
+            setStoredData('snk_events', events); renderCalendar(); closeAddEventModal(); e.target.reset();
+        }
+        function deleteCalendarEvent(id) { setStoredData('snk_events', getStoredData('snk_events').filter(e => e.id !== id)); renderCalendar(); }
+
+        // NEWS WITH EDIT & DELETE
+        function renderNews() {
+            const news = getStoredData('snk_news');
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = '';
+            news.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-darkCard border border-slate-800 p-6 rounded-2xl space-y-3 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between"><span class="text-[10px] font-bold text-teal-400 uppercase">${item.date}</span></div>
+                        <h3 class="text-base font-bold text-white">${item.title}</h3>
+                        <p class="text-xs text-slate-400">${item.content}</p>
+                    </div>
+                    ${isAdmin ? `<div class="pt-3 border-t border-slate-800 flex space-x-2"><button onclick="editNewsItem('${item.id}')" class="px-2.5 py-1 bg-slate-800 text-teal-400 rounded-lg text-xs">Править</button><button onclick="deleteNewsItem('${item.id}')" class="px-2.5 py-1 bg-rose-600/20 text-rose-300 rounded-lg text-xs">Удалить</button></div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+        function openAddNewsModal(item = null) {
+            document.getElementById('newsEditId').value = item ? item.id : '';
+            document.getElementById('newsTitleInput').value = item ? item.title : '';
+            document.getElementById('newsDateInput').value = item ? item.date : '';
+            document.getElementById('newsContentInput').value = item ? item.content : '';
+            document.getElementById('newsModalTitle').textContent = item ? 'Редактировать новость' : 'Добавить новость';
+            document.getElementById('addNewsModal').classList.remove('hidden');
+        }
+        function closeAddNewsModal() { document.getElementById('addNewsModal').classList.add('hidden'); }
+        function editNewsItem(id) { const item = getStoredData('snk_news').find(n => n.id === id); if (item) openAddNewsModal(item); }
+        function saveNewsItem(e) {
+            e.preventDefault();
+            const news = getStoredData('snk_news');
+            const editId = document.getElementById('newsEditId').value;
+            const data = { id: editId || 'n_' + Date.now(), title: document.getElementById('newsTitleInput').value, date: document.getElementById('newsDateInput').value, content: document.getElementById('newsContentInput').value };
+            if (editId) { const idx = news.findIndex(n => n.id === editId); if (idx !== -1) news[idx] = data; } else { news.unshift(data); }
+            setStoredData('snk_news', news); renderNews(); closeAddNewsModal();
+        }
+        function deleteNewsItem(id) { setStoredData('snk_news', getStoredData('snk_news').filter(n => n.id !== id)); renderNews(); }
+
+        // MISC
+        function verifyClosedAccess(e) {
+            e.preventDefault();
+            if (document.getElementById('closedPasswordInput').value === 'science2024') {
+                document.getElementById('closedAuthBlock').classList.add('hidden');
+                document.getElementById('closedContentBlock').classList.remove('hidden');
+            } else { document.getElementById('closedAuthError').classList.remove('hidden'); }
+        }
+        function logoutClosedAccess() { document.getElementById('closedAuthBlock').classList.remove('hidden'); document.getElementById('closedContentBlock').classList.add('hidden'); }
+        function saveClosedNotes() { localStorage.setItem('snk_notes', document.getElementById('closedNotesTextarea').value); }
+        function loadClosedNotes() { const ta = document.getElementById('closedNotesTextarea'); if (ta) ta.value = localStorage.getItem('snk_notes') || ''; }
+        function toggleAccordion(id) { const c = document.getElementById(id); if(c) c.classList.toggle('hidden'); }
+        function openLightbox(src, caption) {
+            document.getElementById('lightboxImage').src = src;
+            document.getElementById('lightboxCaption').textContent = caption || '';
+            document.getElementById('lightboxModal').classList.remove('hidden');
+        }
+        function closeLightbox() { document.getElementById('lightboxModal').classList.add('hidden'); }
+        function handleContactSubmit(e) { e.preventDefault(); alert('Сообщение отправлено!'); e.target.reset(); }
+
+        async function promptAdminLogin() {
+            const pw = prompt('Пароль админа:');
+            if (pw && await adminLoginCheck(pw)) {
+                adminPw = pw; cloudMissing.forEach(schedulePush); cloudMissing = [];
+                isAdmin = true; afterAdminLogin();
+                document.getElementById('adminActiveBadge').classList.remove('hidden');
+                document.getElementById('adminAddEventBtn').classList.remove('hidden');
+                document.getElementById('adminAddNewsBtn').classList.remove('hidden');
+                document.getElementById('adminAddGoalBtn').classList.remove('hidden');
+                document.getElementById('adminAddGalleryBtn').classList.remove('hidden');
+                document.getElementById('adminAddKbBtn').classList.remove('hidden');
+                document.getElementById('adminEditContactBtn').classList.remove('hidden');
+                renderGoals(); renderKbAccordion(); renderGallery(); renderMembers(); renderClosedMaterials(); renderSciencePublications(); renderCalendar(); renderNews(); renderAchievements();
+                alert('Админ-режим включен!');
+            } else if (pw) { alert('Неверный пароль!'); }
+        }
+    </script>
+
+<script>
+// ===== КАБИНЕТЫ УЧАСТНИКОВ И МОДЕРАЦИЯ =====
+const WORK_TYPES = { article: 'Статья', thesis: 'Тезисы', conference: 'Доклад / конференция', achievement: 'Достижение', methodical: 'Методичка', other: 'Другое' };
+const IN = 'w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white';
+const CARD = 'bg-darkCard border border-slate-800 p-5 rounded-2xl space-y-3';
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let cab = { token: localStorage.getItem('snk_token') || '', user: null, works: {}, editId: null, mode: 'login', panel: null };
+let pubWorks = {}, modWorks = {}, modUsersMap = {};
+
+async function apiCall(method, path, body) {
+    const h = {};
+    if (cab.token) h['X-Token'] = cab.token;
+    if (adminPw) h['X-Password'] = adminPw;
+    if (body !== undefined) h['Content-Type'] = 'application/json';
+    const r = await fetch(API + path, { method, headers: h, body: body !== undefined ? JSON.stringify(body) : undefined });
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    if (!r.ok) throw new Error(d.error || ('Ошибка ' + r.status));
+    return d;
+}
+async function cabUpload(file) {
+    const q = new URLSearchParams({ kind: 'file', title: file.name, filename: file.name });
+    const h = { 'Content-Type': file.type || 'application/octet-stream' };
+    if (cab.token) h['X-Token'] = cab.token; else if (adminPw) h['X-Password'] = adminPw;
+    const r = await fetch(API + '/api/items?' + q, { method: 'POST', headers: h, body: file });
+    if (!r.ok) throw new Error(r.status === 413 ? 'Файл больше 90 МБ' : 'Ошибка загрузки файла (' + r.status + ')');
+    return (await r.json()).fileUrl;
+}
+function badge(st) {
+    return st === 'approved'
+        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300">Опубликовано</span>'
+        : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300">На проверке</span>';
+}
+function workCard(w, extra) {
+    const meta = [w.venue, w.work_date || w.year].filter(Boolean).map(esc).join(', ');
+    const tags = [w.pub_character, w.pub_status].filter(Boolean).map((t) => `<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300">${esc(t)}</span>`).join('');
+    const open = (w.file_url || w.link) ? `<button onclick="openWorkFile('${w.id}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">${w.file_url ? 'Читать' : 'Открыть ссылку'}</button>` : '';
+    return `<div class="${CARD}">
+        <div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300">${esc(WORK_TYPES[w.type] || 'Другое')}</span>${tags}${extra && extra.status ? badge(w.status) : ''}</div>
+        <h4 class="text-base font-semibold text-white">${esc(w.title)}</h4>
+        ${w.authors ? `<p class="text-slate-300 text-xs">${esc(w.authors)}</p>` : ''}
+        ${w.description ? `<p class="text-slate-400 text-xs">${esc(w.description)}</p>` : ''}
+        <p class="text-slate-400 text-xs">${w.author ? 'Загрузил: ' + esc(w.author) + (w.course ? ' (' + esc(w.course) + ')' : '') + (meta ? ' · ' : '') : ''}${meta}</p>
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-800">${open}${extra && extra.html ? extra.html : ''}</div></div>`;
+}
+function openWorkFile(id) {
+    const w = pubWorks[id] || cab.works[id] || modWorks[id];
+    if (!w) return;
+    if (w.file_url) openFileReader(w.file_url, w.file_name);
+    else if (w.link) window.open(w.link, '_blank', 'noopener');
+}
+
+// ---- публичный список ----
+async function renderMemberWorks() {
+    const c = document.getElementById('memberWorksContainer'), c2 = document.getElementById('memberAchievementsContainer'); if (!c) return;
+    try {
+        const { works } = await apiCall('GET', '/api/works');
+        pubWorks = Object.fromEntries(works.map((w) => [w.id, w]));
+        const list = (arr, empty) => arr.length ? arr.map((w) => workCard(w)).join('') : `<p class="text-slate-500 text-sm">${empty}</p>`;
+        c.innerHTML = list(works.filter((w) => w.type !== 'achievement'), 'Пока нет подтверждённых работ участников.');
+        if (c2) c2.innerHTML = list(works.filter((w) => w.type === 'achievement'), 'Пока нет подтверждённых достижений.');
+    } catch (e) { c.innerHTML = ''; if (c2) c2.innerHTML = ''; }
+}
+
+// ---- кабинет участника ----
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+const CHARS = ['', 'РИНЦ', 'Скопус', 'Абстракт', 'Обзорная статья', 'Оригинальное исследование'];
+const STD_ROLES = ['Участник', 'Активный член'];
+const LEAD_RE = /руководител|заместител|председател/i;
+const BTN = 'px-3 py-2 rounded-xl text-xs font-bold ';
+const fld = (l, h) => `<label class="block text-xs text-slate-400">${l}${h}</label>`;
+const inp = (id, ph, v, extra) => `<input id="${id}" class="${IN}" placeholder="${ph}" value="${esc(v)}" ${extra || ''}>`;
+const editBtn = (id) => `<button onclick="cabEdit('${id}')" class="px-3 py-1.5 bg-slate-700 text-white rounded-xl text-xs">Редактировать</button>`;
+
+async function renderCabinet() {
+    const box = document.getElementById('cabinetBody');
+    if (cab.token && !cab.user) {
+        try { cab.user = (await apiCall('GET', '/api/me')).user; } catch (e) { cab.token = ''; localStorage.removeItem('snk_token'); }
+    }
+    if (!cab.user) return renderAuthForms(box);
+    let works = [];
+    try { works = (await apiCall('GET', '/api/works?mine=1')).works; } catch (e) {}
+    cab.works = Object.fromEntries(works.map((w) => [w.id, w]));
+    const u = cab.user, p = u.profile || {};
+    const pubs = works.filter((w) => w.type !== 'achievement'), achs = works.filter((w) => w.type === 'achievement');
+    box.innerHTML = [profileCard(u, p), cab.panel === 'profile' ? profileForm(u, p) : '',
+        cab.panel === 'pub' || cab.panel === 'ach' ? workForm(cab.panel, cab.editId ? cab.works[cab.editId] : null) : '',
+        achSection(achs), pubTable(pubs)].join('');
+}
+function profileCard(u, p) {
+    const row = (l, v) => `<div><span class="text-slate-500">${l}:</span> <strong class="text-white">${esc(v || '—')}</strong></div>`;
+    return `<div class="${CARD}"><div class="flex flex-col sm:flex-row gap-5">
+        <div class="text-center"><img src="${esc(p.avatar || DEFAULT_AVATAR)}" class="w-24 h-24 rounded-full object-cover border-2 border-teal-400 mx-auto">${p.alias ? `<span class="text-xs text-teal-300">@${esc(p.alias)}</span>` : ''}</div>
+        <div class="flex-1 space-y-2"><h3 class="text-xl font-bold text-white">${esc(u.name)}</h3><p class="text-teal-300 text-sm">${esc(p.status || 'Участник')}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">${row('Курс / группа', u.course)}${row('Место работы', p.work)}${row('SPIN-код', p.spin)}${row('eLIBRARY ID', p.elibrary)}${row('ORCID', p.orcid)}${row('Активность', p.activity)}</div>
+        ${p.bio ? `<p class="text-xs text-slate-400">${esc(p.bio)}</p>` : ''}</div></div>
+        <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-800">
+        <button onclick="cabPanel('profile')" class="${BTN}bg-slate-700 text-white">Редактировать профиль</button>
+        <button onclick="cabPanel('pub')" class="${BTN}bg-indigo-600 text-white">Добавить научную работу</button>
+        <button onclick="cabPanel('ach')" class="${BTN}bg-amber-600 text-white">Добавить достижение</button>
+        <button onclick="cabLogout()" class="text-xs text-slate-400 underline ml-auto">Выйти</button></div></div>`;
+}
+function profileForm(u, p) {
+    const st = p.status || 'Участник', lead = LEAD_RE.test(st), custom = !lead && !STD_ROLES.includes(st);
+    const role = lead ? `<p class="text-xs text-slate-400">Роль «${esc(st)}» назначена администратором.</p>`
+        : fld('Роль', `<select id="cpRole" onchange="document.getElementById('cpRoleCustom').classList.toggle('hidden', this.value !== 'CUSTOM')" class="${IN} mt-1">${STD_ROLES.map((r) => `<option ${st === r ? 'selected' : ''}>${r}</option>`).join('')}<option value="CUSTOM" ${custom ? 'selected' : ''}>Своя формулировка…</option></select>`)
+          + `<input id="cpRoleCustom" class="${IN} ${custom ? '' : 'hidden'}" placeholder="Ваша роль" value="${custom ? esc(st) : ''}">`;
+    return `<form onsubmit="cabSaveProfile(event)" class="${CARD}"><h3 class="text-white font-bold">Редактирование профиля</h3>
+        <p class="text-xs text-slate-500">ФИО (${esc(u.name)}) и роли руководства меняет только администратор. Остальное сохраняется сразу.</p>
+        ${fld('Фотография', `<input id="cpPhoto" type="file" accept="image/*" class="${IN} mt-1">`)}
+        ${inp('cpAlias', 'Псевдоним', p.alias)}${inp('cpCourse', 'Курс / группа', u.course)}${inp('cpWork', 'Место работы', p.work)}
+        ${role}${inp('cpSpin', 'SPIN-код', p.spin)}${inp('cpElib', 'eLIBRARY ID', p.elibrary)}${inp('cpOrcid', 'ORCID', p.orcid)}${inp('cpActivity', 'Активность', p.activity)}
+        <textarea id="cpBio" rows="3" class="${IN}" placeholder="Биографическая справка">${esc(p.bio)}</textarea>
+        <div class="flex gap-2"><button class="${BTN}bg-teal-500 text-slate-950">Сохранить</button><button type="button" onclick="cabCancel()" class="${BTN}bg-slate-700 text-white">Отмена</button></div></form>`;
+}
+function workForm(kind, e) {
+    const ach = kind === 'ach'; e = e || {};
+    const sel = (id, opts, cur, ph) => `<select id="${id}" class="${IN}">${opts.map((o) => `<option value="${o}" ${cur === o ? 'selected' : ''}>${o || ph}</option>`).join('')}</select>`;
+    const typeSel = ach ? '' : `<select id="cwType" class="${IN}">${Object.entries(WORK_TYPES).filter(([k]) => k !== 'achievement').map(([k, v]) => `<option value="${k}" ${e.type === k ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
+    return `<form onsubmit="cabSubmitWork(event)" class="${CARD}"><h3 class="text-white font-bold">${e.id ? 'Редактирование' : 'Добавить'}: ${ach ? 'достижение' : 'научная работа'}</h3>
+        ${typeSel}${inp('cwTitle', ach ? 'Номинация / название' : 'Название (с УДК)', e.title, 'required')}
+        ${ach ? '' : inp('cwAuthors', 'Авторы и соавторы', e.authors) + inp('cwVenue', 'Журнал / конференция', e.venue)}
+        ${fld('Дата (месяц)', `<input id="cwDate" type="month" class="${IN} mt-1" value="${esc(e.work_date)}">`)}
+        ${ach ? `<textarea id="cwDesc" rows="2" class="${IN}" placeholder="Описание">${esc(e.description)}</textarea>`
+            : inp('cwLink', 'Ссылка (https://…)', e.link) + sel('cwChar', CHARS, e.pub_character, 'Характер (необязательно)') + sel('cwPubStatus', ['', 'опубликовано', 'в печати'], e.pub_status, 'Статус публикации') + inp('cwChars', 'Объём, знаков', e.chars, 'type="number"')}
+        ${fld((ach ? 'Фото / сертификат' : 'Файл (PDF, до 90 МБ)') + (e.file_name ? ' — сейчас: ' + esc(e.file_name) : ''), `<input id="cwFile" type="file" class="${IN} mt-1">`)}
+        <div class="flex gap-2"><button id="cwSubmit" class="${BTN}bg-teal-500 text-slate-950">${e.id ? 'Сохранить' : 'Отправить на проверку'}</button><button type="button" onclick="cabCancel()" class="${BTN}bg-slate-700 text-white">Отмена</button></div></form>`;
+}
+function achSection(achs) {
+    return `<div class="space-y-3"><h3 class="text-white font-bold">Достижения, сертификаты и дипломы</h3>${achs.length ? achs.map((w) => workCard(w, { status: true, html: w.status === 'pending' ? editBtn(w.id) : '' })).join('') : '<p class="text-slate-500 text-sm">Пока нет.</p>'}</div>`;
+}
+function pubTable(pubs) {
+    const ok = pubs.filter((w) => w.status === 'approved'), cnt = (f) => ok.filter(f).length, chars = ok.reduce((a, w) => a + (w.chars || 0), 0);
+    const td = 'class="p-2"';
+    const rows = pubs.map((w, i) => `<tr class="border-t border-slate-800 align-top"><td ${td}>${i + 1}</td><td class="p-2 text-white">${esc(w.title)}<div class="text-slate-500">${esc(WORK_TYPES[w.type] || '')}${w.venue ? ' · ' + esc(w.venue) : ''}${w.work_date ? ' · ' + esc(w.work_date) : ''}</div></td><td ${td}>${esc(w.authors) || '—'}</td><td ${td}>${(w.file_url || w.link) ? `<button onclick="openWorkFile('${w.id}')" class="text-indigo-300 underline">открыть</button>` : '—'}</td><td ${td}>${esc(w.pub_character) || '—'}</td><td ${td}>${esc(w.pub_status) || '—'}</td><td ${td}>${w.chars || '—'}</td><td ${td}>${w.chars ? (w.chars / 1800).toFixed(2) : '—'}</td><td ${td}>${badge(w.status)}</td><td ${td}>${w.status === 'pending' ? editBtn(w.id) : ''}</td></tr>`).join('');
+    const th = (t) => `<th class="p-2">${t}</th>`;
+    const stat = (l, v) => `<div>${l}: <b class="text-white">${v}</b></div>`;
+    return `<div class="space-y-3"><h3 class="text-white font-bold">Сводная таблица публикаций</h3>
+        <div class="${CARD} overflow-x-auto"><table class="w-full text-xs text-slate-300 min-w-[780px]"><thead><tr class="text-left text-slate-500">${['№', 'Название', 'Авторы', 'Файл / ссылка', 'Характер', 'Статус', 'Знаков', 'Стр. А4', 'Проверка', ''].map(th).join('')}</tr></thead>
+        <tbody>${rows || '<tr><td colspan="10" class="p-3 text-slate-500">Пока пусто.</td></tr>'}</tbody></table></div>
+        <div class="${CARD} grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs"><div class="col-span-full text-slate-500">Итоги по подтверждённым работам (1 стр. А4 ≈ 1800 знаков)</div>
+        ${stat('Работ', ok.length)}${stat('Опубликовано', cnt((w) => w.pub_status === 'опубликовано'))}${stat('В печати', cnt((w) => w.pub_status === 'в печати'))}${stat('РИНЦ', cnt((w) => w.pub_character === 'РИНЦ'))}${stat('Скопус', cnt((w) => w.pub_character === 'Скопус'))}${stat('Знаков / стр. А4', chars + ' / ' + (chars / 1800).toFixed(2))}</div></div>`;
+}
+function cabPanel(k) { cab.panel = (cab.panel === k && !cab.editId) ? null : k; cab.editId = null; renderCabinet(); }
+function cabCancel() { cab.panel = null; cab.editId = null; renderCabinet(); }
+function cabEdit(id) { cab.editId = id; cab.panel = cab.works[id].type === 'achievement' ? 'ach' : 'pub'; renderCabinet(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+async function cabSaveProfile(ev) {
+    ev.preventDefault();
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : undefined; };
+    try {
+        const prof = { alias: v('cpAlias'), work: v('cpWork'), spin: v('cpSpin'), elibrary: v('cpElib'), orcid: v('cpOrcid'), activity: v('cpActivity'), bio: v('cpBio') };
+        const rs = document.getElementById('cpRole');
+        if (rs) prof.status = rs.value === 'CUSTOM' ? (v('cpRoleCustom') || 'Участник') : rs.value;
+        const f = document.getElementById('cpPhoto').files[0]; if (f) prof.avatar = await resizeImage(f, 256);
+        await apiCall('PUT', '/api/me/profile', { course: v('cpCourse'), profile: prof });
+        cab.user = null; cab.panel = null; renderCabinet(); loadApiMembers();
+    } catch (e) { alert(e.message); }
+}
+async function cabSubmitWork(ev) {
+    ev.preventDefault();
+    const btn = document.getElementById('cwSubmit'); btn.disabled = true; btn.textContent = 'Отправка…';
+    const ach = cab.panel === 'ach', v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    try {
+        const old = cab.editId ? cab.works[cab.editId] : null;
+        let file_url = old ? old.file_url : '', file_name = old ? old.file_name : '';
+        const f = document.getElementById('cwFile').files[0];
+        if (f) { file_url = await cabUpload(f); file_name = f.name; }
+        const body = { type: ach ? 'achievement' : v('cwType'), title: v('cwTitle'), authors: v('cwAuthors'), venue: v('cwVenue'), work_date: v('cwDate'), link: v('cwLink'), pub_character: v('cwChar'), pub_status: v('cwPubStatus'), chars: v('cwChars'), description: v('cwDesc'), file_url, file_name };
+        if (old) await apiCall('PUT', '/api/works/' + old.id, body); else await apiCall('POST', '/api/works', body);
+        cab.editId = null; cab.panel = null; renderCabinet();
+    } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = 'Отправить на проверку'; }
+}
+
+function renderAuthForms(box) {
+    const login = cab.mode === 'login';
+    box.innerHTML = `<div class="${CARD} max-w-md">
+        <div class="flex gap-2 text-sm"><button onclick="cab.mode='login';renderCabinet()" class="px-3 py-1.5 rounded-xl ${login ? 'bg-teal-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'}">Вход</button>
+        <button onclick="cab.mode='register';renderCabinet()" class="px-3 py-1.5 rounded-xl ${!login ? 'bg-teal-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'}">Регистрация</button></div>
+        ${login ? `<form onsubmit="cabLogin(event)" class="space-y-3">
+            <input id="alLogin" required class="${IN}" placeholder="Логин" autocomplete="username">
+            <input id="alPass" type="password" required class="${IN}" placeholder="Пароль" autocomplete="current-password">
+            <button class="px-4 py-2 rounded-xl bg-teal-500 text-slate-950 font-bold text-sm">Войти</button>
+            <p class="text-xs text-slate-500">Забыли пароль? Напишите администратору, он задаст новый.</p></form>`
+        : `<div class="space-y-3"><p class="text-sm text-slate-300">Регистрация проходит через анкету участника: фото, данные и пароль. Администратор подтвердит заявку, и вы появитесь в списке участников и сможете войти в кабинет.</p>
+            <button onclick="openMemberModal()" class="px-4 py-2 rounded-xl bg-teal-500 text-slate-950 font-bold text-sm">Заполнить анкету</button></div>`}</div>`;
+}
+async function cabLogin(ev) {
+    ev.preventDefault();
+    try {
+        const d = await apiCall('POST', '/api/login', { login: document.getElementById('alLogin').value, password: document.getElementById('alPass').value });
+        cab.token = d.token; cab.user = null; localStorage.setItem('snk_token', d.token); renderCabinet();
+    } catch (e) { alert(e.message); }
+}
+async function cabRegister(ev) {
+    ev.preventDefault();
+    try {
+        await apiCall('POST', '/api/register', { name: document.getElementById('arName').value, course: document.getElementById('arCourse').value, login: document.getElementById('arLogin').value, password: document.getElementById('arPass').value });
+        alert('Заявка отправлена. Войти можно после подтверждения администратором.'); cab.mode = 'login'; renderCabinet();
+    } catch (e) { alert(e.message); }
+}
+function cabLogout() { cab.token = ''; cab.user = null; localStorage.removeItem('snk_token'); renderCabinet(); }
+// ---- модерация (админ) ----
+function afterAdminLogin() { document.getElementById('menuAdminBtn').classList.remove('hidden'); renderMemberWorks(); }
+async function renderMod() {
+    const box = document.getElementById('modBody');
+    if (!adminPw) { box.innerHTML = '<p class="text-slate-400">Войдите как админ (меню → вход админа).</p>'; return; }
+    box.innerHTML = '<p class="text-slate-400">Загрузка…</p>';
+    try {
+        const [u, w] = await Promise.all([apiCall('GET', '/api/users'), apiCall('GET', '/api/works?all=1')]);
+        modWorks = Object.fromEntries(w.works.map((x) => [x.id, x])); modUsersMap = Object.fromEntries(u.users.map((x) => [x.id, x]));
+        const pu = u.users.filter((x) => x.status === 'pending'), au = u.users.filter((x) => x.status !== 'pending');
+        const pw = w.works.filter((x) => x.status === 'pending'), aw = w.works.filter((x) => x.status === 'approved');
+        const B = (cls, fn, t) => `<button onclick="${fn}" class="px-3 py-1.5 rounded-xl text-xs font-bold ${cls}">${t}</button>`;
+        const sec = (t, n, body) => `<div class="space-y-3"><h3 class="text-white font-bold">${t} <span class="text-slate-500 text-sm">(${n})</span></h3>${body || '<p class="text-slate-500 text-sm">Пусто.</p>'}</div>`;
+        const userRow = (x) => `<div class="${CARD}"><p class="text-white font-semibold">${esc(x.name)} <span class="text-slate-400 text-xs">${esc(x.course || '')} · ${esc(x.login)} · ${esc(x.status)}</span></p>${profLine(x)}<div class="flex flex-wrap gap-2">
+            ${x.status !== 'active' ? B('bg-emerald-600 text-white', `modUser('${x.id}','active')`, 'Подтвердить') : B('bg-slate-700 text-white', `modUser('${x.id}','blocked')`, 'Заблокировать')}
+            ${B('bg-slate-700 text-white', `modPass('${x.id}')`, 'Новый пароль')}${B('bg-slate-700 text-white', `modEditUser('${x.id}')`, 'ФИО / роль')}</div></div>`;
+        box.innerHTML = [
+            sec('Новые участники', pu.length, pu.map(userRow).join('')),
+            sec('Работы на проверке', pw.length, pw.map((x) => workCard(x, { html: B('bg-emerald-600 text-white', `modWork('${x.id}','approved')`, 'Подтвердить') + B('bg-rose-600 text-white', `modDel('${x.id}')`, 'Удалить') })).join('')),
+            sec('Опубликованные работы', aw.length, aw.map((x) => workCard(x, { html: B('bg-slate-700 text-white', `modWork('${x.id}','pending')`, 'Снять с публикации') + B('bg-rose-600 text-white', `modDel('${x.id}')`, 'Удалить') })).join('')),
+            sec('Все участники', au.length, au.map(userRow).join('')),
+        ].join('');
+    } catch (e) { box.innerHTML = '<p class="text-rose-400">' + esc(e.message) + '</p>'; }
+}
+async function modUser(id, st) { try { await apiCall('POST', `/api/users/${id}/status`, { status: st }); renderMod(); loadApiMembers(); } catch (e) { alert(e.message); } }
+async function modPass(id) { const p = prompt('Новый пароль для участника (от 8 знаков):'); if (!p) return; try { await apiCall('POST', `/api/users/${id}/password`, { password: p }); alert('Пароль изменён. Передайте его участнику.'); } catch (e) { alert(e.message); } }
+async function modEditUser(id) {
+    const x = modUsersMap[id]; if (!x) return;
+    const name = prompt('ФИО:', x.name); if (!name) return;
+    const role = prompt('Роль (Руководитель / Заместитель / Активный член / Участник / своя):', (x.profile || {}).status || 'Участник'); if (role === null) return;
+    try { await apiCall('PUT', '/api/users/' + id, { name, course: x.course, profile: { ...(x.profile || {}), status: role } }); renderMod(); loadApiMembers(); } catch (e) { alert(e.message); }
+}
+async function modWork(id, st) { try { await apiCall('POST', `/api/works/${id}/status`, { status: st }); renderMod(); renderMemberWorks(); } catch (e) { alert(e.message); } }
+async function modDel(id) { if (!confirm('Удалить работу безвозвратно?')) return; try { await apiCall('DELETE', '/api/works/' + id); renderMod(); renderMemberWorks(); } catch (e) { alert(e.message); } }
+
+const _switchTab = switchTab;
+switchTab = function (id) {
+    _switchTab(id);
+    if (id === 'cabinet') renderCabinet(); else if (id === 'moderation') renderMod(); else if (id === 'science') renderMemberWorks();
+};
+window.addEventListener('load', renderMemberWorks);
+
+// ===== АНКЕТА УЧАСТНИКА = РЕГИСТРАЦИЯ =====
+let apiMembers = [];
+function resizeImage(file, size) {
+    return new Promise((res, rej) => {
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => {
+            const k = Math.min(1, size / Math.max(img.width, img.height)), c = document.createElement('canvas');
+            c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = () => rej(new Error('Не удалось прочитать фото'));
+        img.src = url;
+    });
+}
+async function registerMember(e) {
+    e.preventDefault();
+    const v = (id) => document.getElementById(id).value.trim();
+    let status = v('memberStatusInput'); if (status === 'CUSTOM') status = v('memberCustomStatusInput') || 'Участник';
+    const btn = document.getElementById('memberSubmitBtn'); btn.disabled = true;
+    try {
+        const f = document.getElementById('memberAvatarInput').files[0];
+        const profile = { status, spin: v('memberSpinInput'), pubs: v('memberPubsInput'), activity: v('memberActivityInput'), bio: v('memberBioInput'), avatar: f ? await resizeImage(f, 256) : '' };
+        await apiCall('POST', '/api/register', { name: v('memberNameInput'), course: v('mmCourse'), login: v('mmLogin'), password: document.getElementById('mmPass').value, profile });
+        closeMemberModal(); e.target.reset();
+        alert('Заявка отправлена! После подтверждения администратором вы появитесь в списке участников и сможете войти в кабинет.');
+    } catch (err) { alert(err.message); }
+    btn.disabled = false;
+}
+const _openMemberModal = openMemberModal;
+openMemberModal = function () {
+    _openMemberModal();
+    const adm = !!isAdmin;
+    document.getElementById('memberAccountBlock').classList.toggle('hidden', adm);
+    document.getElementById('mmLogin').required = !adm; document.getElementById('mmPass').required = !adm;
+    document.getElementById('memberSubmitBtn').textContent = adm ? 'Сохранить профиль' : 'Отправить заявку';
+    const rs = document.getElementById('memberStatusInput');
+    [...rs.options].forEach((o) => { if (o.value === 'Руководитель' || o.value === 'Заместитель') o.disabled = !adm; });
+    if (!adm && rs.selectedOptions[0] && rs.selectedOptions[0].disabled) { rs.value = 'Активный член'; handleRoleSelectChange(); }
+};
+function memberCardHtml(u) {
+    const p = u.profile || {};
+    const img = p.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+    return `<div class="bg-darkCard border border-slate-800 rounded-3xl p-6 space-y-4"><div class="flex items-center space-x-4">
+        <img src="${esc(img)}" class="w-16 h-16 rounded-full object-cover border-2 border-teal-400"><div>
+        <h3 class="font-bold text-white text-base">${esc(u.name)}</h3>
+        <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">${esc(p.status || 'Участник')}</span></div></div>
+        <div class="text-xs text-slate-300 space-y-1">${p.spin ? `<p>SPIN: ${esc(p.spin)}</p>` : ''}${p.activity ? `<p>${esc(p.activity)}</p>` : ''}${p.bio ? `<p class="text-slate-400 line-clamp-3">${esc(p.bio)}</p>` : ''}</div>
+        ${isAdmin ? `<button onclick="modUser('${u.id}','blocked')" class="text-rose-400 text-xs hover:underline"><i class="fa-solid fa-eye-slash"></i> Скрыть</button>` : ''}</div>`;
+}
+const _renderMembers = renderMembers;
+renderMembers = function () {
+    _renderMembers();
+    const grid = document.getElementById('membersGrid'); if (!grid) return;
+    apiMembers.forEach((u) => grid.insertAdjacentHTML('beforeend', memberCardHtml(u)));
+    updateMemberCounter(getStoredData('snk_members').length + apiMembers.length);
+};
+async function loadApiMembers() { try { apiMembers = (await apiCall('GET', '/api/members')).members; renderMembers(); } catch (e) {} }
+function profLine(x) {
+    const p = x.profile || {};
+    const bits = [p.status, p.spin && 'SPIN ' + p.spin, p.activity].filter(Boolean).map(esc).join(' · ');
+    return `<div class="flex items-start gap-3">${p.avatar ? `<img src="${esc(p.avatar)}" class="w-12 h-12 rounded-full object-cover">` : ''}<p class="text-xs text-slate-400">${bits}${p.bio ? '<br>' + esc(p.bio) : ''}</p></div>`;
+}
+window.addEventListener('load', loadApiMembers);
+</script>
+</body>
+</html>
