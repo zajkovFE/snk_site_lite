@@ -1,0 +1,19 @@
+{
+  "name": "snk-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-01",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "snk-db",
+      "database_id": "ВСТАВЬТЕ-СЮДА-ID-БАЗЫ"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "snk-files"
+    }
+  ]
+}
