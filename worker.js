@@ -39,6 +39,11 @@ export default {
       if (m === "GET" && path.startsWith("/api/file/")) return await getFile(request, path, env);
       if (m === "DELETE" && path.startsWith("/api/items/")) return await deleteItem(request, path, env);
 
+      if (path.startsWith("/api/state/")) {
+        if (m === "GET") return await getState(path, env);
+        if (m === "PUT") return await putState(request, path, env);
+      }
+
       return json({ error: "not found" }, 404);
     } catch (e) {
       return json({ error: "server error", detail: String(e) }, 500);
@@ -193,5 +198,29 @@ async function deleteItem(request, path, env) {
   if (!row) return json({ error: "not found" }, 404);
   if (row.file_key) await env.BUCKET.delete(row.file_key);
   await env.DB.prepare("DELETE FROM items WHERE id = ?").bind(id).run();
+  return json({ ok: true });
+}
+
+// ---------- общие данные сайта (списки, новости, настройки) ----------
+
+const STATE_KEY = /^snk_[a-z_]{1,60}$/;
+
+async function getState(path, env) {
+  const key = path.slice("/api/state/".length);
+  if (!STATE_KEY.test(key)) return json({ error: "bad key" }, 400);
+  const obj = await env.BUCKET.get("state/" + key);
+  if (!obj) return json({ error: "no data" }, 404);
+  return new Response(obj.body, {
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", ...corsHeaders() },
+  });
+}
+
+async function putState(request, path, env) {
+  if (getRole(request, env) !== "admin") return json({ error: "admin password required" }, 401);
+  const key = path.slice("/api/state/".length);
+  if (!STATE_KEY.test(key)) return json({ error: "bad key" }, 400);
+  const text = await request.text();
+  if (text.length > 4 * 1024 * 1024) return json({ error: "too large" }, 413);
+  await env.BUCKET.put("state/" + key, text, { httpMetadata: { contentType: "text/plain" } });
   return json({ ok: true });
 }
