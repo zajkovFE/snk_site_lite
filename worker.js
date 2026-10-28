@@ -42,6 +42,7 @@ export default {
       if (["/api/register", "/api/login", "/api/me", "/api/works", "/api/users", "/api/members"].some((p) => path === p || path.startsWith(p + "/"))) {
         return await accountRoutes(request, url, env);
       }
+      if (path === "/api/interviews" || path.startsWith("/api/interviews/")) return await interviewRoutes(request, url, env);
       if (path.startsWith("/api/state/")) {
         if (m === "GET") return await getState(path, env);
         if (m === "PUT") return await putState(request, path, env);
@@ -429,6 +430,70 @@ async function accountRoutes(request, url, env) {
       await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id).run();
       return json({ ok: true });
     }
+  }
+  return json({ error: "not found" }, 404);
+}
+
+// ---------- интервью (читают все, пишет только админ) ----------
+
+const INTERVIEW_CATS = ["department_head", "teacher", "practitioner", "alumnus", "other"];
+
+function interviewFields(b, origin) {
+  const title = clean(b.title, 200);
+  if (!title) return { error: "Укажите заголовок" };
+  const cover = clean(b.cover_url, 500), photo = clean(b.photo_url, 500);
+  const urlOk = (u) => !u || u.startsWith(origin + "/api/file/");
+  if (!urlOk(cover) || !urlOk(photo)) return { error: "Недопустимая ссылка на фото" };
+  const date = clean(b.interview_date, 7);
+  if (date && !/^\d{4}-(0[1-9]|1[0-2])$/.test(date)) return { error: "Дата должна быть в формате ГГГГ-ММ" };
+  const body = (b.body || "").toString();
+  if (body.length > 60000) return { error: "Текст слишком длинный (максимум 60 000 знаков)" };
+  return {
+    title, subtitle: clean(b.subtitle, 300), person: clean(b.person, 150), position: clean(b.position, 200),
+    category: INTERVIEW_CATS.includes(b.category) ? b.category : "other",
+    lead: clean(b.lead, 1500), body, cover, photo, date,
+    published: b.published === false || b.published === 0 ? 0 : 1,
+  };
+}
+
+async function interviewRoutes(request, url, env) {
+  const m = request.method, id = url.pathname.split("/")[3];
+  const admin = (await getRole(request, env)) === "admin";
+
+  if (m === "GET" && !id) {
+    const where = admin && url.searchParams.get("all") === "1" ? "1 = 1" : "published = 1";
+    const { results } = await env.DB.prepare(
+      "SELECT id, title, subtitle, person, position, category, substr(lead, 1, 300) AS lead, cover_url, interview_date, published, created_at FROM interviews WHERE " + where + " ORDER BY created_at DESC LIMIT 500"
+    ).all();
+    return json({ interviews: results });
+  }
+  if (m === "GET" && id) {
+    const row = await env.DB.prepare("SELECT * FROM interviews WHERE id = ?").bind(id).first();
+    if (!row || (!row.published && !admin)) return json({ error: "not found" }, 404);
+    return json({ interview: row });
+  }
+
+  if (!admin) return json({ error: "Нужен пароль админа" }, 401);
+
+  if (m === "POST" && !id) {
+    const f = interviewFields(await readJson(request), url.origin);
+    if (f.error) return json({ error: f.error }, 400);
+    const newId = crypto.randomUUID();
+    await env.DB.prepare("INSERT INTO interviews (id, title, subtitle, person, position, category, lead, body, cover_url, photo_url, interview_date, published, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(newId, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, Date.now()).run();
+    return json({ ok: true, id: newId }, 201);
+  }
+  if (m === "PUT" && id) {
+    if (!(await env.DB.prepare("SELECT id FROM interviews WHERE id = ?").bind(id).first())) return json({ error: "not found" }, 404);
+    const f = interviewFields(await readJson(request), url.origin);
+    if (f.error) return json({ error: f.error }, 400);
+    await env.DB.prepare("UPDATE interviews SET title=?, subtitle=?, person=?, position=?, category=?, lead=?, body=?, cover_url=?, photo_url=?, interview_date=?, published=? WHERE id=?")
+      .bind(f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, id).run();
+    return json({ ok: true });
+  }
+  if (m === "DELETE" && id) {
+    await env.DB.prepare("DELETE FROM interviews WHERE id = ?").bind(id).run();
+    return json({ ok: true });
   }
   return json({ error: "not found" }, 404);
 }
