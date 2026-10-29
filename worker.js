@@ -1,11 +1,12 @@
 // =====================================================
-//  СНК · API для файлов (Cloudflare Worker + R2 + D1)
-//  Вставляется целиком в редактор Worker'а. Ничего больше менять не нужно,
-//  кроме строки ALLOWED_ORIGIN (когда сайт будет на GitHub Pages).
+//  СНК · API (Cloudflare Worker + R2 + D1)
+//  Файлы worker.js и tests.js лежат в корне репозитория,
+//  Cloudflare собирает их вместе при каждом коммите.
+//  Единственная настройка здесь: ALLOWED_ORIGIN.
 // =====================================================
 
-// "*" = принимать запросы с любого сайта (удобно для тестов).
-// Когда сайт будет опубликован, замените на адрес вида "https://ВАШ-ЛОГИН.github.io"
+import { handleTests } from "./tests.js";
+
 const ALLOWED_ORIGIN = "*";
 
 // Максимальный размер одного файла (бесплатный план Workers пропускает ~100 МБ на запрос)
@@ -31,6 +32,21 @@ export default {
       const url = new URL(request.url);
       const path = url.pathname;
       const m = request.method;
+
+      if (m === "POST" && (path === "/api/tests/submit" || path === "/api/register")) { // защита от накрутки без хранения IP
+        const limited = await rateLimit(request, env, path === "/api/register" ? 20 : 120);
+        if (limited) return limited;
+      }
+
+      if (path.startsWith("/api/tests")) { // опросники и шкалы (tests.js), права берём из наших функций
+        const tr = await handleTests(request, env, {
+          json: (d, s = 200) => json(d, s),
+          text: (body, status, type, extra = {}) => new Response(body, { status, headers: { ...corsHeaders(), "Content-Type": type, "Cache-Control": "no-store", ...extra } }),
+          isAdmin: async (req) => (await getRole(req, env)) === "admin",
+          getUser: (req) => getUser(req, env),
+        });
+        if (tr) return tr;
+      }
 
       if (m === "GET" && path === "/") return json({ ok: true, service: "snk-api" });
       if (m === "GET" && path === "/api/whoami") return json({ role: await getRole(request, env) });
@@ -496,4 +512,17 @@ async function interviewRoutes(request, url, env) {
     return json({ ok: true });
   }
   return json({ error: "not found" }, 404);
+}
+
+// ---------- ограничитель частоты (на workers.dev обычные правила WAF недоступны) ----------
+
+async function rateLimit(request, env, perHour) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = new Date().toISOString();
+  const k = await sha256(`${ip}|${now.slice(0, 10)}|${env.ADMIN_PASSWORD || ""}`); // ключ меняется каждый день, IP не восстановить
+  const row = await env.DB.prepare(
+    "INSERT INTO rate_hits (k, bucket, n) VALUES (?, ?, 1) ON CONFLICT (k, bucket) DO UPDATE SET n = n + 1 RETURNING n"
+  ).bind(k, now.slice(0, 13)).first();
+  if (row && row.n === 1) await env.DB.prepare("DELETE FROM rate_hits WHERE bucket < ?").bind(new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 13)).run();
+  return row && row.n > perHour ? json({ error: "Слишком много запросов. Попробуйте через час." }, 429) : null;
 }
