@@ -13,7 +13,8 @@ export const STD_CONSENT = [
   'Наше исследование проводится в рамках изучения {topic}.',
   'Участие добровольное. Вы можете прекратить прохождение в любой момент без объяснения причин и без каких-либо последствий.',
   'Опрос анонимный: имя, IP-адрес и точное время прохождения не сохраняются. Ответы используются только в научных целях и публикуются в обобщённом виде.',
-  'Результат не является диагнозом. Если вас что-то беспокоит, обратитесь к специалисту.',
+  'Результат скрининга не является диагнозом. Если вас что-то беспокоит, обратитесь к специалисту.',
+  '{result}',
   'После прохождения вы получите номер участника: по нему можно отозвать свои ответы.',
   'По всем вопросам вы можете обратиться к исследователям: {contacts}',
 ].join('\n\n');
@@ -222,19 +223,21 @@ function safeEq(a, b) {
 const csvCell = (v) => { let s = v === null || v === undefined ? '' : String(v); if (typeof v === 'string' && /^[=+\-@]/.test(s)) s = "'" + s; return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 
 // Публичный вид шаблона для респондента: без ключей подсчёта, осей и правил безопасности.
+const resultLine = (def, cfg) => (cfg && cfg.show_result && def.show_scores)
+  ? 'После прохождения вы увидите свой результат.' : 'Индивидуальный результат после прохождения показан не будет.';
 function buildConsent(def, cfg) {
-  const none = 'контактные данные исследователем не указаны';
-  if (cfg && cfg.mode === 'custom') return cfg.custom_text + '\n\nКонтакты исследователя: ' + (cfg.contacts || 'не указаны.');
-  if (cfg) return STD_CONSENT.replace('{topic}', () => cfg.topic || def.topic || def.title).replace('{contacts}', () => cfg.contacts || none);
-  if (def.consent) return def.consent + '\n\nКонтактные данные исследователя не указаны.';
-  return STD_CONSENT.replace('{topic}', () => def.topic || def.title).replace('{contacts}', () => 'контактные данные не указаны');
+  const none = 'контактные данные исследователем не указаны', rl = resultLine(def, cfg);
+  if (cfg && cfg.mode === 'custom') return cfg.custom_text + '\n\n' + rl + '\n\nКонтакты исследователя: ' + (cfg.contacts || 'не указаны.');
+  if (cfg) return STD_CONSENT.replace('{topic}', () => cfg.topic || def.topic || def.title).replace('{result}', () => rl).replace('{contacts}', () => cfg.contacts || none);
+  if (def.consent) return def.consent + '\n\n' + rl + '\n\nКонтактные данные исследователя не указаны.';
+  return STD_CONSENT.replace('{topic}', () => def.topic || def.title).replace('{result}', () => rl).replace('{contacts}', () => 'контактные данные не указаны');
 }
 const latestConfig = (db, login, slug) => db.prepare('SELECT * FROM study_configs WHERE login = ? AND slug = ? ORDER BY id DESC LIMIT 1').bind(login, slug).first();
 
-function publicView(row, def, consent, configId) {
+function publicView(row, def, consent, configId, contacts) {
   return {
     slug: def.slug, title: def.title, version: row.version, description: def.description, instructions: def.instructions,
-    consent, config_id: configId || null, consent_label: def.consent_label, page_size: def.page_size,
+    consent, config_id: configId || null, contacts: contacts || '', consent_label: def.consent_label, page_size: def.page_size,
     items: def.items.map((i) => ({ id: i.id, text: i.text, section: i.section, required: i.required, show_if: i.show_if, options: i.options.map((o) => o.t) })),
   };
 }
@@ -270,7 +273,7 @@ export async function handleTests(request, env, ctx) {
           return ctx.json({ templates: results });
         }
         const { results } = await db.prepare(`SELECT slug, version, title, definition FROM test_templates WHERE status = 'active' ORDER BY title`).all();
-        return ctx.json({ tests: results.map((r) => { const d = JSON.parse(r.definition); return { slug: r.slug, version: r.version, title: r.title, description: d.description, topic: d.topic, items: d.items.length }; }) });
+        return ctx.json({ tests: results.map((r) => { const d = JSON.parse(r.definition); return { slug: r.slug, version: r.version, title: r.title, description: d.description, topic: d.topic, show_scores: !!d.show_scores, items: d.items.length }; }) });
       }
       const slug = parts[1];
       if (url.searchParams.get('full') === '1') {
@@ -286,7 +289,7 @@ export async function handleTests(request, env, ctx) {
       const def = JSON.parse(row.definition);
       const ref = str(url.searchParams.get('ref'), 80).toLowerCase(); let cfg = null;
       if (ref) { const u = await db.prepare(`SELECT login FROM users WHERE login = ? AND status = 'active'`).bind(ref).first(); if (u) cfg = await latestConfig(db, u.login, slug); }
-      return ctx.json({ test: publicView(row, def, buildConsent(def, cfg), cfg && cfg.id) });
+      return ctx.json({ test: publicView(row, def, buildConsent(def, cfg), cfg && cfg.id, cfg ? cfg.contacts : '') });
     }
 
     /* ---- админ: загрузка шаблона ---- */
@@ -333,11 +336,11 @@ export async function handleTests(request, env, ctx) {
       if (!user) return err('Войдите в аккаунт студента', 401);
       if (method === 'GET' && !parts[1]) {
         const { results } = await db.prepare(`SELECT c.* FROM study_configs c WHERE c.login = ? AND c.id = (SELECT MAX(id) FROM study_configs WHERE login = c.login AND slug = c.slug)`).bind(user.login).all();
-        return ctx.json({ std: STD_CONSENT, configs: Object.fromEntries(results.map((c) => [c.slug, { id: c.id, mode: c.mode, topic: c.topic, custom_text: c.custom_text, contacts: c.contacts, no_contacts: !!c.no_contacts, created_at: c.created_at }])) });
+        return ctx.json({ std: STD_CONSENT, configs: Object.fromEntries(results.map((c) => [c.slug, { id: c.id, mode: c.mode, topic: c.topic, custom_text: c.custom_text, contacts: c.contacts, no_contacts: !!c.no_contacts, show_result: !!c.show_result, created_at: c.created_at }])) });
       }
       if (method === 'POST' && parts[1]) {
         const slug = parts[1];
-        const tpl = await db.prepare(`SELECT id FROM test_templates WHERE slug = ? AND status = 'active' LIMIT 1`).bind(slug).first();
+        const tpl = await db.prepare(`SELECT id, definition FROM test_templates WHERE slug = ? AND status = 'active' ORDER BY version DESC LIMIT 1`).bind(slug).first();
         if (!tpl) return err('Опросник не найден или отключён', 404);
         let b; try { b = await readJson(20000); } catch (e) { return err(e.message); }
         const mode = b.mode === 'custom' ? 'custom' : 'standard';
@@ -345,8 +348,10 @@ export async function handleTests(request, env, ctx) {
         if (mode === 'standard' && !topic) return err('Укажите, в рамках изучения чего проводится исследование');
         if (mode === 'custom' && custom.length < 30) return err('Текст согласия слишком короткий (минимум 30 знаков)');
         if (!contacts && b.no_contacts !== true) return err('Укажите контакты исследователя или подтвердите, что работаете без них');
-        const r = await db.prepare('INSERT INTO study_configs (login, slug, mode, topic, custom_text, contacts, no_contacts) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(user.login, slug, mode, mode === 'standard' ? topic : '', mode === 'custom' ? custom : '', contacts, contacts ? 0 : 1).run();
+        let allowShow = false; try { allowShow = !!JSON.parse(tpl.definition).show_scores; } catch (e) {}
+        const showResult = b.show_result === true && allowShow ? 1 : 0; // результат показываем только если исследователь отметил и шкала это допускает
+        const r = await db.prepare('INSERT INTO study_configs (login, slug, mode, topic, custom_text, contacts, no_contacts, show_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(user.login, slug, mode, mode === 'standard' ? topic : '', mode === 'custom' ? custom : '', contacts, contacts ? 0 : 1, showResult).run();
         return ctx.json({ ok: true, id: r.meta.last_row_id }, 201);
       }
       return err('Не найдено', 404);
@@ -366,15 +371,16 @@ export async function handleTests(request, env, ctx) {
       // ref -> researcher_token: только существующий активный студент, иначе без привязки
       let token = null; const ref = str(body.ref, 80).toLowerCase();
       if (ref) { const u = await db.prepare(`SELECT login FROM users WHERE login = ? AND status = 'active'`).bind(ref).first(); if (u) token = u.login; }
-      let cfgId = null;
-      if (token && Number.isInteger(body.config_id)) { const c = await db.prepare('SELECT id FROM study_configs WHERE id = ? AND login = ? AND slug = ?').bind(body.config_id, token, row.slug).first(); if (c) cfgId = c.id; }
+      let cfgId = null, showRes = false;
+      if (token && Number.isInteger(body.config_id)) { const c = await db.prepare('SELECT id, show_result FROM study_configs WHERE id = ? AND login = ? AND slug = ?').bind(body.config_id, token, row.slug).first(); if (c) { cfgId = c.id; showRes = !!c.show_result; } }
       let dur = Number.isInteger(body.duration_sec) ? clamp(body.duration_sec, 0, 86400) : null;
       const day = new Date().toISOString().slice(0, 10);
       await db.prepare(`INSERT OR IGNORE INTO test_results (id, template_id, slug, version, researcher_token, answers, scores, coord_x, coord_y, duration_sec, day, config_id)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(body.id.toLowerCase(), row.id, row.slug, row.version, token, JSON.stringify(res.raw), JSON.stringify(res.scores), res.x, res.y, dur, day, cfgId).run();
-      const out = { ok: true, id: body.id.toLowerCase(), safety: res.safety, note: def.result_note };
-      if (def.show_scores) out.scores = def.scoring.subscales.map((s) => ({ id: s.id, name: s.name, ...res.scores[s.id] }));
+      const out = { ok: true, id: body.id.toLowerCase(), safety: res.safety }; // сообщение безопасности показываем всегда
+      if (def.show_scores && showRes) { out.scores = def.scoring.subscales.map((s) => ({ id: s.id, name: s.name, ...res.scores[s.id] })); out.note = def.result_note; }
+      else out.result_hidden = true;
       return ctx.json(out, 201);
     }
 
