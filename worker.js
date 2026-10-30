@@ -246,11 +246,31 @@ async function getState(path, env) {
 }
 
 async function putState(request, path, env) {
-  if ((await getRole(request, env)) !== "admin") return json({ error: "admin password required" }, 401);
+  const role = await getRole(request, env);
   const key = path.slice("/api/state/".length);
   if (!STATE_KEY.test(key)) return json({ error: "bad key" }, 400);
+  const clubKey = key === "snk_materials"; // закрытый раздел: общий пароль кружка разрешает только добавлять
+  if (role !== "admin" && !(role === "member" && clubKey)) return json({ error: "admin password required" }, 401);
   const text = await request.text();
   if (text.length > 4 * 1024 * 1024) return json({ error: "too large" }, 413);
+  if (role === "member") {
+    let incoming; try { incoming = JSON.parse(text); } catch { return json({ error: "bad json" }, 400); }
+    if (!Array.isArray(incoming)) return json({ error: "bad data" }, 400);
+    let existing = [];
+    const cur = await env.BUCKET.get("state/" + key);
+    if (cur) { try { existing = JSON.parse(await cur.text()); } catch {} }
+    if (!Array.isArray(existing)) existing = [];
+    const ids = new Set(existing.map((x) => x && x.id));
+    const origin = new URL(request.url).origin;
+    const fresh = incoming
+      .filter((x) => x && typeof x === "object" && typeof x.id === "string" && !ids.has(x.id))
+      .map((x) => ({
+        id: clean(x.id, 60), title: clean(x.title, 200), category: clean(x.category, 100), fileName: clean(x.fileName, 200),
+        fileData: typeof x.fileData === "string" && x.fileData.startsWith(origin + "/api/file/") ? x.fileData : "",
+      }));
+    await env.BUCKET.put("state/" + key, JSON.stringify(existing.concat(fresh)), { httpMetadata: { contentType: "text/plain" } });
+    return json({ ok: true, added: fresh.length });
+  }
   await env.BUCKET.put("state/" + key, text, { httpMetadata: { contentType: "text/plain" } });
   return json({ ok: true });
 }
