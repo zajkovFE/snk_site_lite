@@ -4,7 +4,7 @@
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,40}$/;
 const ID_RE = /^[A-Za-z0-9_.-]{1,40}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MAX_DEF = 200000;   // байт, размер JSON шаблона
+const MAX_DEF = 800000;   // байт, размер JSON шаблона (MMPI-566 с запасом)
 const MAX_BODY = 65536;   // байт, размер ответа респондента
 const MAX_ROWS = 5000;
 
@@ -75,7 +75,7 @@ export function validateDefinition(d) {
   }
 
   const items = []; const seen = new Set();
-  if (!Array.isArray(d.items) || !d.items.length || d.items.length > 300) errs.push('items: нужен массив из 1–300 вопросов');
+  if (!Array.isArray(d.items) || !d.items.length || d.items.length > 700) errs.push('items: нужен массив из 1–700 вопросов');
   else d.items.forEach((it, n) => {
     const w = `items[${n}]`;
     if (!it || typeof it !== 'object') { errs.push(`${w}: должен быть объектом`); return; }
@@ -109,15 +109,30 @@ export function validateDefinition(d) {
     const w = `scoring.subscales[${n}]`;
     if (!s || !ID_RE.test(String(s.id || ''))) { errs.push(`${w}: нужен id`); return; }
     if (subs.some((x) => x.id === s.id)) { errs.push(`${w}: повторяющийся id «${s.id}»`); return; }
+    if (s.derive !== undefined) {   // производная шкала: взвешенная сумма уже вычисленных (например Hs + 0.5K)
+      if (!Array.isArray(s.derive) || !s.derive.length) { errs.push(`${w} (${s.id}): derive — непустой массив [{scale, w}]`); return; }
+      const parts = [];
+      for (const q of s.derive) {
+        if (!q || !subs.some((x) => x.id === q.scale) || !isNum(q.w)) errs.push(`${w} (${s.id}): derive — {scale: "id субшкалы, заданной выше", w: число}`);
+        else parts.push({ scale: q.scale, w: q.w });
+      }
+      subs.push({ id: s.id, name: str(s.name, 200) || s.id, derive: parts, round: !!s.round, bands: normBands(s.bands, `${w} (${s.id})`, errs) });
+      return;
+    }
     let list = s.items;
     if (list === '*') list = '*';
     else if (!Array.isArray(list) || !list.length) { errs.push(`${w} (${s.id}): items — массив id вопросов или "*"`); return; }
     else for (const id of list) if (!byId[id]) errs.push(`${w} (${s.id}): вопроса «${id}» нет в items`); else if (!byId[id].scored) errs.push(`${w} (${s.id}): вопрос «${id}» помечен scored:false`);
+    let rev = [];
+    if (s.reverse_items !== undefined) {   // обратный ключ только внутри этой шкалы (MMPI: «верно» в одной шкале, «неверно» в другой)
+      if (!Array.isArray(s.reverse_items) || s.reverse_items.some((id) => !byId[id] || (Array.isArray(list) && !list.includes(id)))) errs.push(`${w} (${s.id}): reverse_items — id вопросов из этой же шкалы`);
+      else rev = s.reverse_items;
+    }
     const method = s.method === 'mean' ? 'mean' : 'sum';
     if (s.method && !['sum', 'mean'].includes(s.method)) errs.push(`${w} (${s.id}): method — sum или mean`);
     const ma = s.min_answered === undefined ? 1 : s.min_answered;
     if (!isNum(ma) || ma < 0 || ma > 1) errs.push(`${w} (${s.id}): min_answered — число от 0 до 1`);
-    subs.push({ id: s.id, name: str(s.name, 200) || s.id, items: list, method, min_answered: isNum(ma) ? ma : 1, bands: normBands(s.bands, `${w} (${s.id})`, errs) });
+    subs.push({ id: s.id, name: str(s.name, 200) || s.id, items: list, reverse_items: rev, method, min_answered: isNum(ma) ? ma : 1, bands: normBands(s.bands, `${w} (${s.id})`, errs) });
   });
 
   let axes = null;
@@ -154,7 +169,7 @@ export function validateDefinition(d) {
     result_note: str(d.result_note, 2000), show_scores: d.show_scores !== false, page_size: ps,
     items, scoring: { subscales: subs }, axes, safety,
   };
-  if (JSON.stringify(def).length > MAX_DEF) return { errors: ['шаблон слишком большой (больше 200 КБ)'], def: null };
+  if (JSON.stringify(def).length > MAX_DEF) return { errors: ['шаблон слишком большой (больше 800 КБ)'], def: null };
   return { errors: [], def };
 }
 
@@ -178,24 +193,36 @@ export function computeResult(def, answers) {
   }
   if (errors.length) return { errors };
 
-  const scores = {}; const normRaw = {};
+  const scores = {}; const normRaw = {}; const rng = {};
+  const bandOf = (sub, score) => { const b = sub.bands.find((x) => x.max === null || score <= x.max); return b ? b.label : null; };
   for (const s of def.scoring.subscales) {
+    if (s.derive) {
+      const lo = s.derive.reduce((a, q) => a + (q.w >= 0 ? q.w * rng[q.scale][0] : q.w * rng[q.scale][1]), 0);
+      const hi = s.derive.reduce((a, q) => a + (q.w >= 0 ? q.w * rng[q.scale][1] : q.w * rng[q.scale][0]), 0);
+      rng[s.id] = [lo, hi];
+      let score = null, norm = null, band = null;
+      if (s.derive.every((q) => scores[q.scale].score !== null)) {
+        const raw = s.derive.reduce((a, q) => a + q.w * scores[q.scale].score, 0);
+        score = s.round ? Math.round(raw) : r2(raw);
+        norm = hi > lo ? clamp((score - lo) / (hi - lo), 0, 1) : 0; normRaw[s.id] = norm; norm = r2(norm);
+        band = bandOf(s, score);
+      }
+      scores[s.id] = { score, band, norm };
+      continue;
+    }
     const ids = (s.items === '*' ? def.items.filter((i) => i.scored).map((i) => i.id) : s.items).filter((id) => vis[id]);
     const ans = ids.filter((id) => id in val);
+    const flip = (id) => (s.reverse_items.includes(id) ? range[id][0] + range[id][1] - val[id] : val[id]);
+    const lo = ids.reduce((a, id) => a + range[id][0], 0), hi = ids.reduce((a, id) => a + range[id][1], 0), k = ids.length || 1;
+    rng[s.id] = s.method === 'mean' ? [lo / k, hi / k] : [lo, hi];
     let score = null, norm = null, band = null;
     if (ans.length && ans.length / ids.length >= s.min_answered) {
-      const sum = ans.reduce((a, id) => a + val[id], 0);
-      const lo = ids.reduce((a, id) => a + range[id][0], 0), hi = ids.reduce((a, id) => a + range[id][1], 0);
-      if (s.method === 'mean') {
-        score = r2(sum / ans.length);
-        const k = ids.length; norm = hi > lo ? (score - lo / k) / ((hi - lo) / k) : 0;
-      } else {
-        score = r2(sum * ids.length / ans.length); // пропорциональная экстраполяция при пропусках
-        norm = hi > lo ? (score - lo) / (hi - lo) : 0;
-      }
-      norm = clamp(norm, 0, 1); normRaw[s.id] = norm; norm = r2(norm);
-      const b = s.bands.find((x) => x.max === null || score <= x.max);
-      band = b ? b.label : null;
+      const sum = ans.reduce((a, id) => a + flip(id), 0);
+      if (s.method === 'mean') score = r2(sum / ans.length);
+      else score = r2(sum * ids.length / ans.length); // пропорциональная экстраполяция при пропусках
+      const [l, h] = rng[s.id];
+      norm = h > l ? clamp((score - l) / (h - l), 0, 1) : 0; normRaw[s.id] = norm; norm = r2(norm);
+      band = bandOf(s, score);
     }
     scores[s.id] = { score, band, norm };
   }
