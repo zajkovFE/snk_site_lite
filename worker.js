@@ -320,10 +320,10 @@ function cleanProfile(p, prev, isAdmin) {
   let status = pick("status", 60) || "Участник";
   if (!isAdmin && LEAD_RE.test(status) && status !== prev.status) status = prev.status || "Участник";
   let avatar = typeof p.avatar === "string" && p.avatar ? p.avatar : (prev.avatar || "");
-  if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(avatar) || avatar.length > 80000) avatar = prev.avatar || "";
+  if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(avatar) || avatar.length > 120000) avatar = prev.avatar || "";
   return {
     status, alias: pick("alias", 40), work: pick("work", 150), spin: pick("spin", 30), elibrary: pick("elibrary", 30),
-    orcid: pick("orcid", 30), pubs: pick("pubs", 100), activity: pick("activity", 120), bio: pick("bio", 600), avatar,
+    orcid: pick("orcid", 30), pubs: pick("pubs", 100), activity: pick("activity", 120), bio: pick("bio", 600), details: pick("details", 2000), avatar,
   };
 }
 
@@ -362,9 +362,22 @@ async function accountRoutes(request, url, env) {
     return json({ token, user: { id: row.id, login: row.login, name: row.name, course: row.course } });
   }
 
-  if (m === "GET" && path === "/api/members") { // публично: только подтверждённые, без логинов
+  if (m === "GET" && path === "/api/members") { // публично: подтверждённые участники, без логинов; со статистикой и списком работ
     const { results } = await env.DB.prepare("SELECT id, name, course, profile FROM users WHERE status = 'active' ORDER BY created_at").all();
-    return json({ members: results.map((r) => ({ id: r.id, name: r.name, course: r.course, profile: safeParse(r.profile) })) });
+    const wr = await env.DB.prepare("SELECT user_id, type, title, venue, work_date, year, pub_character, pub_status FROM works WHERE status = 'approved' ORDER BY created_at DESC LIMIT 3000").all();
+    const by = {};
+    for (const x of wr.results) (by[x.user_id] ||= []).push(x);
+    return json({
+      members: results.map((r) => {
+        const list = by[r.id] || [], pubs = list.filter((x) => x.type !== "achievement"), byChar = {};
+        for (const x of pubs) if (x.pub_character) byChar[x.pub_character] = (byChar[x.pub_character] || 0) + 1;
+        return {
+          id: r.id, name: r.name, course: r.course, profile: safeParse(r.profile),
+          stats: { works: pubs.length, achievements: list.length - pubs.length, by_character: byChar },
+          works: list.slice(0, 12).map((x) => ({ type: x.type, title: x.title, venue: x.venue, date: x.work_date || x.year || "", pub_character: x.pub_character || "", pub_status: x.pub_status || "" })),
+        };
+      }),
+    });
   }
 
   if (m === "GET" && path === "/api/me") {
@@ -472,7 +485,8 @@ async function accountRoutes(request, url, env) {
 
 // ---------- интервью (читают все, пишет только админ) ----------
 
-const INTERVIEW_CATS = ["department_head", "teacher", "practitioner", "alumnus", "other"];
+const INTERVIEW_CATS = ["department_head", "teacher", "practitioner", "alumnus", "history_dept", "history_person", "history_science", "history_story", "other"];
+const INTERVIEW_KINDS = ["interview", "history"]; // интервью и материалы по истории используют один движок
 
 function interviewFields(b, origin) {
   const title = clean(b.title, 200);
@@ -485,7 +499,7 @@ function interviewFields(b, origin) {
   const body = (b.body || "").toString();
   if (body.length > 60000) return { error: "Текст слишком длинный (максимум 60 000 знаков)" };
   return {
-    title, subtitle: clean(b.subtitle, 300), person: clean(b.person, 150), position: clean(b.position, 200),
+    title, kind: INTERVIEW_KINDS.includes(b.kind) ? b.kind : "interview", subtitle: clean(b.subtitle, 300), person: clean(b.person, 150), position: clean(b.position, 200),
     category: INTERVIEW_CATS.includes(b.category) ? b.category : "other",
     lead: clean(b.lead, 1500), body, cover, photo, date,
     published: b.published === false || b.published === 0 ? 0 : 1,
@@ -497,10 +511,12 @@ async function interviewRoutes(request, url, env) {
   const admin = (await getRole(request, env)) === "admin";
 
   if (m === "GET" && !id) {
-    const where = admin && url.searchParams.get("all") === "1" ? "1 = 1" : "published = 1";
+    let where = admin && url.searchParams.get("all") === "1" ? "1 = 1" : "published = 1";
+    const kind = url.searchParams.get("kind") || "interview", args = [];
+    if (kind !== "all") { where += " AND kind = ?"; args.push(INTERVIEW_KINDS.includes(kind) ? kind : "interview"); }
     const { results } = await env.DB.prepare(
-      "SELECT id, title, subtitle, person, position, category, substr(lead, 1, 300) AS lead, cover_url, interview_date, published, created_at FROM interviews WHERE " + where + " ORDER BY created_at DESC LIMIT 500"
-    ).all();
+      "SELECT id, kind, title, subtitle, person, position, category, substr(lead, 1, 300) AS lead, cover_url, interview_date, published, created_at FROM interviews WHERE " + where + " ORDER BY created_at DESC LIMIT 500"
+    ).bind(...args).all();
     return json({ interviews: results });
   }
   if (m === "GET" && id) {
@@ -515,16 +531,16 @@ async function interviewRoutes(request, url, env) {
     const f = interviewFields(await readJson(request), url.origin);
     if (f.error) return json({ error: f.error }, 400);
     const newId = crypto.randomUUID();
-    await env.DB.prepare("INSERT INTO interviews (id, title, subtitle, person, position, category, lead, body, cover_url, photo_url, interview_date, published, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .bind(newId, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, Date.now()).run();
+    await env.DB.prepare("INSERT INTO interviews (id, kind, title, subtitle, person, position, category, lead, body, cover_url, photo_url, interview_date, published, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(newId, f.kind, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, Date.now()).run();
     return json({ ok: true, id: newId }, 201);
   }
   if (m === "PUT" && id) {
     if (!(await env.DB.prepare("SELECT id FROM interviews WHERE id = ?").bind(id).first())) return json({ error: "not found" }, 404);
     const f = interviewFields(await readJson(request), url.origin);
     if (f.error) return json({ error: f.error }, 400);
-    await env.DB.prepare("UPDATE interviews SET title=?, subtitle=?, person=?, position=?, category=?, lead=?, body=?, cover_url=?, photo_url=?, interview_date=?, published=? WHERE id=?")
-      .bind(f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, id).run();
+    await env.DB.prepare("UPDATE interviews SET kind=?, title=?, subtitle=?, person=?, position=?, category=?, lead=?, body=?, cover_url=?, photo_url=?, interview_date=?, published=? WHERE id=?")
+      .bind(f.kind, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, id).run();
     return json({ ok: true });
   }
   if (m === "DELETE" && id) {
