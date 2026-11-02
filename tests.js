@@ -233,7 +233,7 @@ export function computeResult(def, answers) {
     x = proj(def.axes.x); y = proj(def.axes.y);
   }
   const safety = def.safety.filter((r) => vis[r.item] && raw[r.item] !== undefined && raw[r.item] > r.gt).map((r) => r.message);
-  return { errors: [], raw, scores, x, y, safety };
+  return { errors: [], raw, idx, scores, x, y, safety };
 }
 
 /* ====================== ВСПОМОГАТЕЛЬНОЕ ====================== */
@@ -402,9 +402,9 @@ export async function handleTests(request, env, ctx) {
       if (token && Number.isInteger(body.config_id)) { const c = await db.prepare('SELECT id, show_result FROM study_configs WHERE id = ? AND login = ? AND slug = ?').bind(body.config_id, token, row.slug).first(); if (c) { cfgId = c.id; showRes = !!c.show_result; } }
       let dur = Number.isInteger(body.duration_sec) ? clamp(body.duration_sec, 0, 86400) : null;
       const day = new Date().toISOString().slice(0, 10);
-      await db.prepare(`INSERT OR IGNORE INTO test_results (id, template_id, slug, version, researcher_token, answers, scores, coord_x, coord_y, duration_sec, day, config_id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(body.id.toLowerCase(), row.id, row.slug, row.version, token, JSON.stringify(res.raw), JSON.stringify(res.scores), res.x, res.y, dur, day, cfgId).run();
+      await db.prepare(`INSERT OR IGNORE INTO test_results (id, template_id, slug, version, researcher_token, answers, scores, coord_x, coord_y, duration_sec, day, config_id, choices)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(body.id.toLowerCase(), row.id, row.slug, row.version, token, JSON.stringify(res.raw), JSON.stringify(res.scores), res.x, res.y, dur, day, cfgId, JSON.stringify(res.idx)).run();
       const out = { ok: true, id: body.id.toLowerCase(), safety: res.safety }; // сообщение безопасности показываем всегда
       if (def.show_scores && showRes) { out.scores = def.scoring.subscales.map((s) => ({ id: s.id, name: s.name, ...res.scores[s.id] })); out.note = def.result_note; }
       else out.result_hidden = true;
@@ -435,7 +435,7 @@ export async function handleTests(request, env, ctx) {
 
       const slug = url.searchParams.get('slug') || '';
       const ref = admin ? (url.searchParams.get('ref') || '') : '';
-      let q = `SELECT r.id, r.slug, r.version, r.researcher_token, r.answers, r.scores, r.coord_x, r.coord_y, r.duration_sec, r.config_id, r.day, t.title
+      let q = `SELECT r.id, r.slug, r.version, r.researcher_token, r.answers, r.scores, r.coord_x, r.coord_y, r.duration_sec, r.config_id, r.choices, r.day, t.title
                FROM test_results r JOIN test_templates t ON t.id = r.template_id WHERE 1=1${scope}`;
       const b = [...bindScope];
       if (slug) { q += ' AND r.slug = ?'; b.push(slug); }
@@ -453,16 +453,20 @@ export async function handleTests(request, env, ctx) {
             ...aKeys.map((k) => a[k]), ...sKeys.map((k) => (s[k] ? s[k].score : '')), r.coord_x, r.coord_y].map(csvCell).join(';'));
         return ctx.text('\uFEFF' + lines.join('\r\n'), 200, 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename="${slug || 'tests'}.csv"` });
       }
-      let scales = [], hasAxes = false;
+      let scales = [], hasAxes = false; const versions = {};
       if (slug) {
+        for (const v of [...new Set(rows.map((r) => r.version))]) {
+          const t2 = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? AND version = ?').bind(slug, v).first();
+          if (t2) { const d2 = JSON.parse(t2.definition); versions[v] = { items: d2.items.map((i, n) => ({ n: n + 1, id: i.id, text: i.text, section: i.section || '', options: i.options.map((o) => ({ t: o.t, v: o.v })) })) }; }
+        }
         const t = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? ORDER BY version DESC LIMIT 1').bind(slug).first();
         if (t) { const d = JSON.parse(t.definition); scales = d.scoring.subscales.map((x) => ({ id: x.id, name: x.name })); hasAxes = !!d.axes; }
       }
       return ctx.json({
-        total: rows.length, scales, has_axes: hasAxes,
+        total: rows.length, scales, has_axes: hasAxes, versions,
         results: rows.map((r) => ({
           id: r.id, test_name: r.title, slug: r.slug, version: r.version, day: r.day,
-          x: r.coord_x, y: r.coord_y, scores: JSON.parse(r.scores), ...(admin ? { researcher: r.researcher_token } : {}),
+          x: r.coord_x, y: r.coord_y, scores: JSON.parse(r.scores), answers: JSON.parse(r.answers), choices: r.choices ? JSON.parse(r.choices) : null, duration_sec: r.duration_sec, consent_v: r.config_id, ...(admin ? { researcher: r.researcher_token } : {}),
         })),
       });
     }
