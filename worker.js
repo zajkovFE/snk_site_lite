@@ -364,7 +364,8 @@ async function accountRoutes(request, url, env) {
 
   if (m === "GET" && path === "/api/members") { // публично: подтверждённые участники, без логинов; со статистикой и списком работ
     const { results } = await env.DB.prepare("SELECT id, name, course, profile FROM users WHERE status = 'active' ORDER BY created_at").all();
-    const wr = await env.DB.prepare("SELECT user_id, type, title, venue, work_date, year, pub_character, pub_status FROM works WHERE status = 'approved' ORDER BY created_at DESC LIMIT 3000").all();
+    let wr = { results: [] };
+    try { wr = await env.DB.prepare("SELECT user_id, type, title, venue, work_date, year, pub_character, pub_status FROM works WHERE status = 'approved' ORDER BY created_at DESC LIMIT 3000").all(); } catch { /* нет части колонок: отдаём список без статистики */ }
     const by = {};
     for (const x of wr.results) (by[x.user_id] ||= []).push(x);
     return json({
@@ -506,16 +507,24 @@ function interviewFields(b, origin) {
   };
 }
 
+let kindColumn = false; // колонка kind появляется после schema10.sql; пока её нет, раздел «Интервью» работает как раньше
+async function hasKind(env) {
+  if (kindColumn) return true;
+  try { const { results } = await env.DB.prepare("PRAGMA table_info(interviews)").all(); kindColumn = results.some((c) => c.name === "kind"); } catch { kindColumn = false; }
+  return kindColumn;
+}
+
 async function interviewRoutes(request, url, env) {
   const m = request.method, id = url.pathname.split("/")[3];
   const admin = (await getRole(request, env)) === "admin";
 
   if (m === "GET" && !id) {
     let where = admin && url.searchParams.get("all") === "1" ? "1 = 1" : "published = 1";
-    const kind = url.searchParams.get("kind") || "interview", args = [];
-    if (kind !== "all") { where += " AND kind = ?"; args.push(INTERVIEW_KINDS.includes(kind) ? kind : "interview"); }
+    const kind = url.searchParams.get("kind") || "interview", args = [], hk = await hasKind(env);
+    if (!hk && kind === "history") return json({ interviews: [] });
+    if (hk && kind !== "all") { where += " AND kind = ?"; args.push(INTERVIEW_KINDS.includes(kind) ? kind : "interview"); }
     const { results } = await env.DB.prepare(
-      "SELECT id, kind, title, subtitle, person, position, category, substr(lead, 1, 300) AS lead, cover_url, interview_date, published, created_at FROM interviews WHERE " + where + " ORDER BY created_at DESC LIMIT 500"
+      "SELECT id, " + (hk ? "kind" : "'interview' AS kind") + ", title, subtitle, person, position, category, substr(lead, 1, 300) AS lead, cover_url, interview_date, published, created_at FROM interviews WHERE " + where + " ORDER BY created_at DESC LIMIT 500"
     ).bind(...args).all();
     return json({ interviews: results });
   }
@@ -530,17 +539,20 @@ async function interviewRoutes(request, url, env) {
   if (m === "POST" && !id) {
     const f = interviewFields(await readJson(request), url.origin);
     if (f.error) return json({ error: f.error }, 400);
-    const newId = crypto.randomUUID();
-    await env.DB.prepare("INSERT INTO interviews (id, kind, title, subtitle, person, position, category, lead, body, cover_url, photo_url, interview_date, published, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .bind(newId, f.kind, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, Date.now()).run();
+    const newId = crypto.randomUUID(), hk = await hasKind(env);
+    if (!hk && f.kind === "history") return json({ error: "Раздел «История» ещё не включён в базе данных: выполните schema10.sql в D1 (Console)." }, 409);
+    await env.DB.prepare("INSERT INTO interviews (id, " + (hk ? "kind, " : "") + "title, subtitle, person, position, category, lead, body, cover_url, photo_url, interview_date, published, created_at) VALUES (?," + (hk ? "?," : "") + "?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(...[newId, ...(hk ? [f.kind] : []), f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, Date.now()]).run();
     return json({ ok: true, id: newId }, 201);
   }
   if (m === "PUT" && id) {
     if (!(await env.DB.prepare("SELECT id FROM interviews WHERE id = ?").bind(id).first())) return json({ error: "not found" }, 404);
     const f = interviewFields(await readJson(request), url.origin);
     if (f.error) return json({ error: f.error }, 400);
-    await env.DB.prepare("UPDATE interviews SET kind=?, title=?, subtitle=?, person=?, position=?, category=?, lead=?, body=?, cover_url=?, photo_url=?, interview_date=?, published=? WHERE id=?")
-      .bind(f.kind, f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, id).run();
+    const hk = await hasKind(env);
+    if (!hk && f.kind === "history") return json({ error: "Раздел «История» ещё не включён в базе данных: выполните schema10.sql в D1 (Console)." }, 409);
+    await env.DB.prepare("UPDATE interviews SET " + (hk ? "kind=?, " : "") + "title=?, subtitle=?, person=?, position=?, category=?, lead=?, body=?, cover_url=?, photo_url=?, interview_date=?, published=? WHERE id=?")
+      .bind(...[...(hk ? [f.kind] : []), f.title, f.subtitle, f.person, f.position, f.category, f.lead, f.body, f.cover, f.photo, f.date, f.published, id]).run();
     return json({ ok: true });
   }
   if (m === "DELETE" && id) {
