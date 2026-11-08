@@ -2747,6 +2747,7 @@ function rpPrint() {
             el.style.cssText = 'position:fixed;inset:0;z-index:9500';
             document.body.classList.add('respondent-mode'); document.documentElement.classList.add('respondent-mode');
             el.addEventListener('click', runnerClick);
+            el.addEventListener('input', runnerInput);
             document.body.appendChild(el);
         }
         return el;
@@ -2789,14 +2790,18 @@ function rpPrint() {
     function renderQuestions(el) {
         const pg = pages(); R.page = Math.min(R.page, pg.length - 1);
         const cur = pg[R.page], vis = visibleItems();
-        const answered = vis.filter((i) => R.ans[i.id] !== undefined).length, pct = vis.length ? Math.round(answered / vis.length * 100) : 0;
+        const answered = vis.filter((i) => R.ans[i.id] !== undefined && R.ans[i.id] !== '').length, pct = vis.length ? Math.round(answered / vis.length * 100) : 0;
         let lastSection = null;
         const cards = cur.map((it) => {
             const sec = it.section && it.section !== lastSection ? `<p class="text-xs uppercase tracking-wider text-teal-400 font-bold pt-2">${esc(it.section)}</p>` : '';
             lastSection = it.section || lastSection;
-            const miss = R.warn && it.required && R.ans[it.id] === undefined;
+            const miss = R.warn && it.required && (R.ans[it.id] === undefined || R.ans[it.id] === '');
+            const isText = it.type === 'text';
             return sec + `<div id="q_${esc(it.id)}" class="${CARD} ${miss ? '!border-rose-500' : ''}"><p class="text-white font-medium">${esc(it.text)}${it.required ? '' : ' <span class="text-slate-500 text-xs">(необязательно)</span>'}</p>
-                <div class="space-y-2">${it.options.map((o, i) => `<button type="button" data-act="pick" data-q="${esc(it.id)}" data-i="${i}" class="w-full text-left px-4 py-3 rounded-xl border text-sm transition ${R.ans[it.id] === i ? 'bg-teal-500/20 border-teal-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-teal-500'}">${esc(o)}</button>`).join('')}</div></div>`;
+                ${isText
+                    ? `<textarea data-act="input" data-q="${esc(it.id)}" rows="4" maxlength="${it.max_length || 2000}" placeholder="${esc(it.placeholder || 'Ваш ответ…')}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500">${esc(R.ans[it.id] || '')}</textarea>`
+                    : `<div class="space-y-2">${it.options.map((o, i) => `<button type="button" data-act="pick" data-q="${esc(it.id)}" data-i="${i}" class="w-full text-left px-4 py-3 rounded-xl border text-sm transition ${R.ans[it.id] === i ? 'bg-teal-500/20 border-teal-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-teal-500'}">${esc(o)}</button>`).join('')}</div>`
+                }</div>`;
         }).join('');
         const last = R.page === pg.length - 1;
         el.innerHTML = shell(header() + `<div><div class="flex justify-between text-xs text-slate-400 mb-1"><span>Страница ${R.page + 1} из ${pg.length}</span><span>${pct}%</span></div>
@@ -2809,14 +2814,14 @@ function rpPrint() {
 
     function pageComplete() {
         const cur = pages()[R.page];
-        const missing = cur.filter((i) => i.required && R.ans[i.id] === undefined);
+        const missing = cur.filter((i) => i.required && (R.ans[i.id] === undefined || R.ans[i.id] === ''));
         R.warn = missing.length > 0;
         return missing;
     }
 
     async function send() {
         R.screen = 'sending'; render();
-        const answers = {}; visibleItems().forEach((i) => { if (R.ans[i.id] !== undefined) answers[i.id] = R.ans[i.id]; });
+        const answers = {}; visibleItems().forEach((i) => { if (R.ans[i.id] !== undefined && R.ans[i.id] !== '') answers[i.id] = R.ans[i.id]; });
         const body = { slug: R.def.slug, id: R.id, ref: R.ref, config_id: R.def.config_id, answers, duration_sec: Math.round((Date.now() - R.t0) / 1000) };
         let res;
         try { const r = await fetch(T + '/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); res = { ok: r.ok, data: await r.json().catch(() => ({})) }; }
@@ -2871,7 +2876,7 @@ function rpPrint() {
         else if (a === 'prev') { R.warn = false; R.page = Math.max(0, R.page - 1); render(); }
         else if (a === 'finish') {
             const m = pageComplete(); if (m.length) { render(); const t = document.getElementById('q_' + m[0].id); if (t) t.scrollIntoView({ block: 'center' }); return; }
-            const all = visibleItems().filter((i) => i.required && R.ans[i.id] === undefined);
+            const all = visibleItems().filter((i) => i.required && (R.ans[i.id] === undefined || R.ans[i.id] === ''));
             if (all.length) { const p = pages().findIndex((pg) => pg.some((i) => i.id === all[0].id)); R.page = Math.max(0, p); R.warn = true; render(); return; }
             send();
         }
@@ -2884,6 +2889,18 @@ function rpPrint() {
             b.textContent = r.ok ? 'Ответы удалены' : 'Не удалось удалить'; b.disabled = true;
         }
         else if (a === 'close') closeRunner();
+    }
+
+    function runnerInput(e) {
+        const ta = e.target.closest('textarea[data-act="input"]');
+        if (ta) {
+            const qid = ta.dataset.q;
+            const val = ta.value.trim();
+            R.ans[qid] = val || undefined;
+            R.warn = false;
+            const card = ta.closest('[id^="q_"]');
+            if (card) card.classList.remove('!border-rose-500');
+        }
     }
 
     async function bootRunner(slug) {
@@ -3086,6 +3103,10 @@ function rpPrint() {
 
     /* ---------- просмотр ответов, выгрузка в Excel, графики для слайдов ---------- */
     function ansLabel(it, r) {
+        if (it.type === 'text') {
+            const v = r.answers[it.id];
+            return v ? String(v) : '—';
+        }
         const ch = r.choices && it.id in r.choices ? r.choices[it.id] : null;
         if (ch !== null && it.options[ch]) return it.options[ch].t;
         const o = it.options.filter((x) => x.v === r.answers[it.id]);
