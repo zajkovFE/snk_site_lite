@@ -469,33 +469,36 @@ export async function handleTests(request, env, ctx) {
       q += ` ORDER BY r.day, r.rowid LIMIT ${MAX_ROWS}`;
       const { results: rows } = await db.prepare(q).bind(...b).all();
 
-      if (url.searchParams.get('format') === 'csv') {
-        const aKeys = [], sKeys = []; const parsed = rows.map((r) => ({ r, a: JSON.parse(r.answers), s: JSON.parse(r.scores) }));
-        for (const p of parsed) { for (const k of Object.keys(p.a)) if (!aKeys.includes(k)) aKeys.push(k); for (const k of Object.keys(p.s)) if (!sKeys.includes(k)) sKeys.push(k); }
-        const head = ['id', 'test', 'version', 'day', ...(admin ? ['researcher'] : []), 'duration_sec', 'consent_v', ...aKeys, ...sKeys.map((k) => 'score_' + k), 'coord_x', 'coord_y'];
-        const lines = [head.map(csvCell).join(';')];
-        for (const { r, a, s } of parsed)
-          lines.push([r.id, r.slug, r.version, r.day, ...(admin ? [r.researcher_token] : []), r.duration_sec, r.config_id,
-            ...aKeys.map((k) => a[k]), ...sKeys.map((k) => (s[k] ? s[k].score : '')), r.coord_x, r.coord_y].map(csvCell).join(';'));
-        return ctx.text('\uFEFF' + lines.join('\r\n'), 200, 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename="${slug || 'tests'}.csv"` });
+     if (url.searchParams.get('format') === 'csv') {
+  const parsed = rows.map((r) => ({ r, a: JSON.parse(r.answers), s: JSON.parse(r.scores) }));
+
+  // Колонки строим по шаблону (всем вопросам всех версий, встречающихся в выборке)
+  const itemIds = [];
+  const seenId = new Set();
+  if (slug) {
+    for (const v of [...new Set(rows.map((r) => r.version))]) {
+      const t = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? AND version = ?').bind(slug, v).first();
+      if (t) {
+        const d = JSON.parse(t.definition);
+        for (const it of d.items) if (!seenId.has(it.id)) { seenId.add(it.id); itemIds.push(it.id); }
       }
-      let scales = [], hasAxes = false; const versions = {};
-      if (slug) {
-        for (const v of [...new Set(rows.map((r) => r.version))]) {
-          const t2 = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? AND version = ?').bind(slug, v).first();
-          if (t2) { const d2 = JSON.parse(t2.definition); versions[v] = { items: d2.items.map((i, n) => ({ n: n + 1, id: i.id, type: i.type || 'choice', text: i.text, section: i.section || '', max_length: i.max_length || null, options: i.options.map((o) => ({ t: o.t, v: o.v })) })) }; }
-        }
-        const t = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? ORDER BY version DESC LIMIT 1').bind(slug).first();
-        if (t) { const d = JSON.parse(t.definition); scales = d.scoring.subscales.map((x) => ({ id: x.id, name: x.name })); hasAxes = !!d.axes; }
-      }
-      return ctx.json({
-        total: rows.length, scales, has_axes: hasAxes, versions,
-        results: rows.map((r) => ({
-          id: r.id, test_name: r.title, slug: r.slug, version: r.version, day: r.day,
-          x: r.coord_x, y: r.coord_y, scores: JSON.parse(r.scores), answers: JSON.parse(r.answers), choices: r.choices ? JSON.parse(r.choices) : null, duration_sec: r.duration_sec, consent_v: r.config_id, ...(admin ? { researcher: r.researcher_token } : {}),
-        })),
-      });
     }
+  }
+  // Фоллбэк: если шаблон не найден или slug не передан — старый способ, по фактическим ответам
+  if (!itemIds.length) {
+    for (const p of parsed) for (const k of Object.keys(p.a)) if (!seenId.has(k)) { seenId.add(k); itemIds.push(k); }
+  }
+
+  const sKeys = [];
+  for (const p of parsed) for (const k of Object.keys(p.s)) if (!sKeys.includes(k)) sKeys.push(k);
+
+  const head = ['id', 'test', 'version', 'day', ...(admin ? ['researcher'] : []), 'duration_sec', 'consent_v', ...itemIds, ...sKeys.map((k) => 'score_' + k), 'coord_x', 'coord_y'];
+  const lines = [head.map(csvCell).join(';')];
+  for (const { r, a, s } of parsed)
+    lines.push([r.id, r.slug, r.version, r.day, ...(admin ? [r.researcher_token] : []), r.duration_sec, r.config_id,
+      ...itemIds.map((k) => (k in a ? a[k] : '')), ...sKeys.map((k) => (s[k] ? s[k].score : '')), r.coord_x, r.coord_y].map(csvCell).join(';'));
+  return ctx.text('\uFEFF' + lines.join('\r\n'), 200, 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename="${slug || 'tests'}.csv"` });
+}
 
     return err('Не найдено', 404);
   } catch (e) {
