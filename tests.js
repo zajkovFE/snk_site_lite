@@ -1,5 +1,5 @@
 // tests.js — модуль опросников для snk-api (Cloudflare Worker + D1).
-// Подключение в worker.js: см. комментарий в конце файла.
+// Подключение в worker.js: коммент в конце
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,40}$/;
 const ID_RE = /^[A-Za-z0-9_.-]{1,40}$/;
@@ -84,21 +84,40 @@ export function validateDefinition(d) {
     seen.add(it.id);
     const text = str(it.text, 1500);
     if (!text) errs.push(`${w} (${it.id}): нет text`);
+    const type = it.type === undefined ? 'choice' : it.type;
+    if (!['choice', 'text'].includes(type)) errs.push(`${w} (${it.id}): type должен быть choice или text`);
     let options = null;
-    if (Array.isArray(it.options)) options = normOptions(it.options, `${w} (${it.id})`, errs);
-    else if (it.set && sets[it.set]) options = sets[it.set];
-    else errs.push(`${w} (${it.id}): нужны options или set из option_sets`);
+    let max_length = null;
+    if (type === 'text') {
+      if (it.options !== undefined || it.set !== undefined) errs.push(`${w} (${it.id}): для текстового вопроса options и set не используются`);
+      max_length = it.max_length === undefined ? 2000 : it.max_length;
+      if (!Number.isInteger(max_length) || max_length < 1 || max_length > 10000) {
+        errs.push(`${w} (${it.id}): max_length — целое число от 1 до 10000`);
+        max_length = 2000;
+      }
+      if (it.scored === true) errs.push(`${w} (${it.id}): текстовый вопрос не может участвовать в подсчёте (scored:false)`);
+    } else {
+      if (Array.isArray(it.options)) options = normOptions(it.options, `${w} (${it.id})`, errs);
+      else if (it.set && sets[it.set]) options = sets[it.set];
+      else errs.push(`${w} (${it.id}): нужны options или set из option_sets`);
+    }
     let show_if = null;
     if (it.show_if !== undefined) {
       const s = it.show_if;
       if (!s || !seen.has(s.item) || s.item === it.id || !Array.isArray(s.in) || !s.in.every(Number.isInteger))
         errs.push(`${w} (${it.id}): show_if = {item: "<id более раннего вопроса>", in: [номера вариантов с 0]}`);
-      else show_if = { item: s.item, in: s.in };
+      else {
+        const parent = items.find((x) => x.id === s.item);
+        if (!parent || parent.type !== 'choice' || !Array.isArray(parent.options) || s.in.some((v) => v < 0 || v >= parent.options.length))
+          errs.push(`${w} (${it.id}): show_if должен ссылаться на предыдущий вопрос с вариантами и допустимые индексы`);
+        else show_if = { item: s.item, in: s.in };
+      }
     }
     items.push({
-      id: it.id, text, options: options || [],
+      id: it.id, type, text, options: options || [], max_length,
+      placeholder: type === 'text' ? (str(it.placeholder, 300) || undefined) : undefined,
       section: str(it.section, 200) || undefined,
-      reverse: !!it.reverse, scored: it.scored !== false, required: it.required !== false, show_if,
+      reverse: !!it.reverse, scored: type === 'text' ? false : it.scored !== false, required: it.required !== false, show_if,
     });
   });
 
@@ -153,7 +172,7 @@ export function validateDefinition(d) {
   if (d.safety !== undefined) {
     if (!Array.isArray(d.safety)) errs.push('safety: должен быть массивом');
     else d.safety.forEach((r, n) => {
-      if (!r || !byId[r.item] || !isNum(r.gt) || !str(r.message, 1500)) errs.push(`safety[${n}]: нужны item (id вопроса), gt (число) и message`);
+      if (!r || !byId[r.item] || byId[r.item].type === 'text' || !isNum(r.gt) || !str(r.message, 1500)) errs.push(`safety[${n}]: нужны item (числовой вопрос с вариантами), gt (число) и message`);
       else safety.push({ item: r.item, gt: r.gt, message: str(r.message, 1500) });
     });
   }
@@ -179,13 +198,20 @@ export function computeResult(def, answers) {
   const errors = []; const idx = {}; const vis = {}; const raw = {}; const val = {};
   const range = {};
   for (const it of def.items) {
-    const vs = it.options.map((o) => o.v);
-    range[it.id] = [Math.min(...vs), Math.max(...vs)];
     let visible = true;
     if (it.show_if) visible = !!vis[it.show_if.item] && idx[it.show_if.item] !== undefined && it.show_if.in.includes(idx[it.show_if.item]);
     vis[it.id] = visible;
     if (!visible) continue;
     const a = answers[it.id];
+    if (it.type === 'text') {
+      const value = typeof a === 'string' ? a.trim() : '';
+      if (!value) { if (it.required) errors.push(it.id); continue; }
+      if (value.length > (it.max_length || 2000)) { errors.push(it.id); continue; }
+      raw[it.id] = value;
+      continue;
+    }
+    const vs = it.options.map((o) => o.v);
+    range[it.id] = [Math.min(...vs), Math.max(...vs)];
     if (a === undefined || a === null) { if (it.required) errors.push(it.id); continue; }
     if (!Number.isInteger(a) || a < 0 || a >= it.options.length) { errors.push(it.id); continue; }
     idx[it.id] = a; raw[it.id] = it.options[a].v;
@@ -265,7 +291,7 @@ function publicView(row, def, consent, configId, contacts) {
   return {
     slug: def.slug, title: def.title, version: row.version, description: def.description, instructions: def.instructions,
     consent, config_id: configId || null, contacts: contacts || '', consent_label: def.consent_label, page_size: def.page_size,
-    items: def.items.map((i) => ({ id: i.id, text: i.text, section: i.section, required: i.required, show_if: i.show_if, options: i.options.map((o) => o.t) })),
+    items: def.items.map((i) => ({ id: i.id, type: i.type || 'choice', text: i.text, section: i.section, required: i.required, show_if: i.show_if, options: i.options.map((o) => o.t), ...(i.type === 'text' ? { max_length: i.max_length || 2000, placeholder: i.placeholder || '' } : {}) })),
   };
 }
 
@@ -457,7 +483,7 @@ export async function handleTests(request, env, ctx) {
       if (slug) {
         for (const v of [...new Set(rows.map((r) => r.version))]) {
           const t2 = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? AND version = ?').bind(slug, v).first();
-          if (t2) { const d2 = JSON.parse(t2.definition); versions[v] = { items: d2.items.map((i, n) => ({ n: n + 1, id: i.id, text: i.text, section: i.section || '', options: i.options.map((o) => ({ t: o.t, v: o.v })) })) }; }
+          if (t2) { const d2 = JSON.parse(t2.definition); versions[v] = { items: d2.items.map((i, n) => ({ n: n + 1, id: i.id, type: i.type || 'choice', text: i.text, section: i.section || '', max_length: i.max_length || null, options: i.options.map((o) => ({ t: o.t, v: o.v })) })) }; }
         }
         const t = await db.prepare('SELECT definition FROM test_templates WHERE slug = ? ORDER BY version DESC LIMIT 1').bind(slug).first();
         if (t) { const d = JSON.parse(t.definition); scales = d.scoring.subscales.map((x) => ({ id: x.id, name: x.name })); hasAxes = !!d.axes; }
