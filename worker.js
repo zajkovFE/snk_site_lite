@@ -6,6 +6,7 @@
 // =====================================================
 
 import { handleTests } from "./tests.js";
+import { handleSimulation } from "./simulation.js";
 
 const ALLOWED_ORIGIN = "*";
 
@@ -33,9 +34,8 @@ export default {
       const path = url.pathname;
       const m = request.method;
 
-      if (m === "POST" && (path === "/api/tests/submit" || path === "/api/register")) { // защита от накрутки без хранения IP
-        const limited = await rateLimit(request, env, path === "/api/register" ? 20 : 120);
-        if (limited) return limited;
+      if (m === "POST" && (path === "/api/tests/submit" || path === "/api/register" || path === "/api/simulation/submit")) {
+  const limited = await rateLimit(request, env, path === "/api/register" ? 20 : path === "/api/simulation/submit" ? 150 : 120);
       }
 
       if (path.startsWith("/api/tests")) { // опросники и шкалы (tests.js), права берём из наших функций
@@ -46,6 +46,15 @@ export default {
           getUser: (req) => getUser(req, env),
         });
         if (tr) return tr;
+      }
+      if (path.startsWith("/api/simulation")) { // виртуальный пациент (simulation.js)
+  const sr = await handleSimulation(request, env, {
+    json: (d, s = 200) => json(d, s),
+    readJson,
+    isAdmin: async (req) => (await getRole(req, env)) === "admin",
+    getUser: (req) => getUser(req, env),
+  });
+  if (sr) return sr;
       }
 
       if (m === "GET" && path === "/") return json({ ok: true, service: "snk-api" });
