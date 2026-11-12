@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Виртуальный пациент · СНК</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{bg:'#0B132B',card:'#1C2541',teal:'#0D9488'}}}}</script>
+</head>
+<body class="bg-bg text-slate-100 min-h-screen font-sans">
+<div class="max-w-6xl mx-auto p-3 space-y-3">
+ <header class="flex flex-wrap items-center gap-2 justify-between">
+  <h1 class="text-lg font-bold">🩺 Виртуальный пациент</h1>
+  <div class="flex flex-wrap items-center gap-2 text-xs">
+   <select id="model" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5">
+    <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5 1.5B (рекомендуется)</option>
+    <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Qwen2.5 3B (мощный ПК)</option>
+    <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5 0.5B (слабое устройство)</option>
+   </select>
+   <button id="start" class="bg-teal px-3 py-1.5 rounded-lg font-bold">Начать приём</button>
+   <a href="index.html" class="text-slate-400 underline">← на сайт СНК</a>
+  </div>
+ </header>
+ <div id="status" class="text-xs text-slate-400">Выберите модель и нажмите «Начать приём». Модель скачивается один раз (~1 ГБ) и кэшируется в браузере.</div>
+ <div id="bar" class="h-1 bg-slate-800 rounded hidden"><div id="barin" class="h-1 bg-teal rounded" style="width:0"></div></div>
+
+ <div class="grid md:grid-cols-2 gap-3">
+  <section class="bg-card border border-slate-800 rounded-2xl p-3 flex flex-col" style="height:70vh">
+   <div class="flex justify-between text-xs text-slate-400 mb-2"><span>Приём</span><span id="counter">—</span></div>
+   <div id="chat" class="flex-1 overflow-y-auto space-y-2 text-sm pr-1"></div>
+   <div class="flex gap-2 mt-2">
+    <textarea id="q" rows="2" disabled class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Ваш вопрос пациенту…"></textarea>
+    <button id="send" disabled class="bg-teal px-4 rounded-xl font-bold disabled:opacity-40">➤</button>
+   </div>
+  </section>
+
+  <section class="bg-card border border-slate-800 rounded-2xl p-3 space-y-2 text-sm overflow-y-auto" style="height:70vh">
+   <div class="font-bold">Медицинская карта (история болезни)</div>
+   <div id="passport" class="text-xs text-slate-400"></div>
+   <div id="ehr" class="space-y-2"></div>
+   <label class="block text-xs text-slate-400">XII. Клинический диагноз (МКБ-10)</label>
+   <select id="dx" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"><option value="">— выберите —</option></select>
+   <button id="finish" disabled class="w-full bg-indigo-600 py-2 rounded-xl font-bold disabled:opacity-40">Завершить курацию и отправить</button>
+  </section>
+ </div>
+ <div id="result" class="hidden bg-card border border-teal rounded-2xl p-4 text-sm space-y-1"></div>
+</div>
+
+<script type="module">
+let webllm=null;
+const API='https://snk-api.zajkovila88.workers.dev', $=id=>document.getElementById(id);
+const token=localStorage.getItem('snk_token')||'';
+const F=[['complaints','II. Жалобы','Что беспокоит, со слов больного, по возможности дословно',3],
+['anam_morbi','III. Анамнез заболевания','Когда и как началось, как развивалось, что усиливает/облегчает',4],
+['anam_vitae','IV. Анамнез жизни','Наследственность; развитие, образование, работа, семья; болезни, травмы, привычки; преморбид',4],
+['somatic','V. Соматический статус','По данным беседы и наблюдения',2],
+['neuro','VI. Неврологический статус','По данным беседы и наблюдения',2],
+['mental_status','VII. Психический статус','Сознание, ориентировка, внешний вид, контакт, речь, восприятие, мышление, эмоции, воля, память, внимание, критика',5],
+['justification','X. Обоснование диагноза','Признак → откуда получен (фраза пациента)',4],
+['differential','XI. Дифференциальный диагноз','Почему не подходят: органические (F0), ПАВ (F1), шизофрения (F2), аффективные (F3), другие невротические (F4)',4],
+['plan','Рекомендации (не оценивается)','Шкалы, обследования, препараты',3]];
+$('ehr').innerHTML=F.map(([k,t,p,r])=>`<div><label class="block text-xs font-bold text-slate-300">${t}</label><textarea data-k="${k}" rows="${r}" placeholder="${p}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm"></textarea></div>`).join('');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let engine=null, tpl=null, msgs=[], log=[], turns=0, t0=0, busy=false, done=false, tick=null;
+
+const api=(p,o={})=>fetch(API+p,{...o,headers:{'X-Token':token,'Content-Type':'application/json'}}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
+api('/api/simulation/icd').then(r=>{for(const[k,v]of Object.entries(r.d.icd||{}))$('dx').insertAdjacentHTML('beforeend',`<option value="${k}">${k} · ${esc(v)}</option>`)});
+
+function prompt(p){const c=p.config,r=c.behavior_rules.reactivity,m=c.meta,s=c.symptoms_matrix;
+return `Ты — реальный пациент на приёме у врача-психиатра. Никогда не говори, что ты ИИ. Отвечай только по-русски, строго от первого лица.
+Ты: ${m.gender}, ${m.age} лет, ${m.occupation}. Характер: ${c.clinical_profile.temperament}.
+Тебя мучает: ${s.primary_complaints}
+Что ты знаешь о своём состоянии: ${s.somatic_history}
+Что усиливает симптомы (говори об этом ТОЛЬКО если врач прямо спросит про работу, семью, стресс или причины): ${s.hidden_triggers}
+Манера речи: ${c.behavior_rules.speech_style} Простые разговорные слова, без медицинских терминов и без диагнозов.
+Если врач сочувствует: ${r.on_empathy}
+Если врач спорит или говорит, что ты здорова: ${r.on_skepticism}
+Если врач уводит тему: ${r.on_distraction}
+Правила: отвечай 1–3 короткими предложениями, только на заданный вопрос; не рассказывай всю историю сразу; свой глубинный страх раскрывай лишь после нескольких уточняющих вопросов.`}
+
+function say(who,text){const d=document.createElement('div');d.className=who==='student'?'text-right':'';
+ d.innerHTML=`<span class="inline-block max-w-[85%] px-3 py-2 rounded-2xl ${who==='student'?'bg-teal':'bg-slate-800'}">${esc(text)}</span>`;
+ $('chat').appendChild(d);$('chat').scrollTop=1e9;return d.firstChild}
+function updCounter(){const left=Math.max(0,tpl.limits.maxSeconds-Math.floor((Date.now()-t0)/1000));
+ $('counter').textContent=`вопросов: ${turns}/${tpl.limits.maxTurns} · ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
+ if(left===0||turns>=tpl.limits.maxTurns){$('send').disabled=true;$('q').disabled=true}}
+
+$('start').onclick=async()=>{
+ if(!token){$('status').innerHTML='Нужен вход: войдите в личный кабинет на <a class="underline" href="index.html">сайте СНК</a> и вернитесь сюда.';return}
+ if(!navigator.gpu){$('status').textContent='Браузер без WebGPU. Откройте в свежем Chrome/Edge на ПК или Android.';return}
+ $('start').disabled=true;$('bar').classList.remove('hidden');
+ const r=await api('/api/simulation/template'); if(!r.ok){$('status').textContent=r.d.error||'Не удалось получить пациента';$('start').disabled=false;return}
+ tpl=r.d;const mt=tpl.config.meta;$('passport').textContent=`I. Паспортная часть: ${mt.gender}, ${mt.age} лет, ${mt.occupation}. Остальное выясните у пациента.`;
+ try{webllm=webllm||await import('https://esm.run/@mlc-ai/web-llm');engine=await webllm.CreateMLCEngine($('model').value,{initProgressCallback:p=>{$('status').textContent=p.text;$('barin').style.width=Math.round(p.progress*100)+'%'}})}
+ catch(e){$('status').textContent='Модель не загрузилась: '+e.message;$('start').disabled=false;return}
+ $('bar').classList.add('hidden');$('status').textContent='Пациент в кабинете. Выясните жалобы и поставьте диагноз.';
+ msgs=[{role:'system',content:prompt(tpl)}];t0=Date.now();
+ $('q').disabled=$('send').disabled=$('finish').disabled=false;
+ say('patient','Здравствуйте, доктор…');log.push({role:'patient',text:'Здравствуйте, доктор…'});
+ tick=setInterval(updCounter,1000);updCounter()};
+
+async function ask(){const t=$('q').value.trim();if(!t||busy||turns>=tpl.limits.maxTurns)return;
+ busy=true;$('q').value='';turns++;say('student',t);log.push({role:'student',text:t});updCounter();
+ msgs.push({role:'user',content:t});
+ const ctx=[msgs[0],...msgs.slice(1).slice(-12)],el=say('patient','…');let out='';
+ try{const s=await engine.chat.completions.create({messages:ctx,stream:true,temperature:0.7,max_tokens:160});
+  for await(const c of s){out+=c.choices[0]?.delta?.content||'';el.textContent=out;$('chat').scrollTop=1e9}}
+ catch(e){out='(связь с моделью прервалась)';el.textContent=out}
+ msgs.push({role:'assistant',content:out});log.push({role:'patient',text:out});busy=false}
+$('send').onclick=ask;$('q').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}};
+
+$('finish').onclick=async()=>{
+ if(done||!turns){alert('Сначала задайте хотя бы один вопрос.');return}
+ if(!$('dx').value){alert('Выберите предварительный диагноз.');return}
+ done=true;clearInterval(tick);$('finish').disabled=$('send').disabled=$('q').disabled=true;
+ const report={diagnosis:$('dx').value};$('ehr').querySelectorAll('textarea').forEach(t=>report[t.dataset.k==='mental_status'?'mental_status':t.dataset.k]=t.value);
+ const r=await api('/api/simulation/submit',{method:'POST',body:JSON.stringify({template_id:tpl.id,duration_seconds:Math.floor((Date.now()-t0)/1000),chat_log:log,
+  report})});
+ const b=$('result');b.classList.remove('hidden');
+ if(!r.ok){b.textContent=r.d.error||'Ошибка отправки';done=false;$('finish').disabled=false;return}
+ const d=r.d,L={deontology:'Деонтология',diagnostic_accuracy:'Точность диагноза',history_taking:'Сбор анамнеза',completeness:'Заполнение истории'};
+ b.innerHTML=`<div class="text-lg font-bold">Итог: ${d.total}/100</div>`+Object.entries(d.scores).map(([k,v])=>`<div>${L[k]}: ${v}</div>`).join('')+
+  `<div class="pt-2 text-slate-300">Верный диагноз: <b>${esc(d.correct_dx)}</b> · ${esc(d.correct_name)}</div>`};
+</script></body></html>
