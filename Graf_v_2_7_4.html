@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Graph Analyzer v2.7.4 — СНК Психиатрии</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#0a0e1a; color:#e0e6f0; font-family:'Segoe UI','Helvetica Neue',sans-serif; overflow:hidden; }
+
+  .top-bar { position:fixed; top:0; left:0; right:0; min-height:56px; background:linear-gradient(90deg,#0f1729 0%,#1a2340 100%); border-bottom:1px solid #2a3a5c; display:flex; align-items:center; padding:0 20px; z-index:100; gap:18px; }
+  .logo { font-size:15px; font-weight:600; color:#6ea8ff; letter-spacing:.5px; }
+  .logo span { color:#9aa5b4; font-weight:400; margin-left:8px; }
+  .top-stats { display:flex; gap:16px; margin-left:auto; font-size:12px; color:#8a95a8; align-items:center; flex-wrap:wrap; }
+  .top-stats b { color:#e0e6f0; font-weight:600; }
+  .stat-item { display:flex; align-items:center; gap:5px; cursor:help; }
+  .stat-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .metrics-mode-badge { font-size:10px; padding:3px 8px; border-radius:10px; background:#1e2a4a; color:#9aa5b4; border:1px solid #2e3e5c; cursor:pointer; }
+  .metrics-mode-badge.visible { background:#3b2910; color:#f59e0b; border-color:#7c5a1a; }
+
+  .btn { background:#1e2a4a; color:#c0c8d8; border:1px solid #2e3e5c; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+  .btn:hover { background:#2a3a5c; color:#fff; border-color:#4a5a7c; }
+  .btn-primary { background:#2563eb; border-color:#3b82f6; color:#fff; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .btn-mini { padding:4px 8px; font-size:11px; }
+  .btn-row { display:flex; gap:4px; flex-wrap:wrap; }
+
+  .sidebar { position:fixed; top:var(--tb,56px); left:0; width:320px; bottom:0; background:#0d1326; border-right:1px solid #1e2a4a; overflow-y:auto; padding:16px; z-index:90; }
+  .sidebar h3 { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6ea8ff; margin:16px 0 8px 0; padding-bottom:4px; border-bottom:1px solid #1e2a4a; }
+  .sidebar h3:first-child { margin-top:0; }
+
+  .upload-zone { border:2px dashed #2e3e5c; border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; background:#0a0f1e; }
+  .upload-zone:hover { border-color:#3b82f6; background:#0f1730; }
+  .upload-zone.dragover { border-color:#60a5fa; background:#1e3a5f; }
+  .upload-zone .icon { font-size:28px; margin-bottom:6px; }
+  .upload-zone .text { font-size:12px; color:#8a95a8; }
+  .upload-zone .text b { color:#6ea8ff; display:block; margin-bottom:4px; }
+
+  .filter-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:4px; cursor:pointer; font-size:12px; transition:background .15s; }
+  .filter-item:hover { background:#1a2340; }
+  .filter-item input { cursor:pointer; }
+  .filter-item .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .filter-item .label { flex:1; color:#c0c8d8; }
+  .filter-item .count { color:#6b7588; font-size:11px; }
+
+  .search-box { width:100%; background:#0a0f1e; border:1px solid #2e3e5c; color:#e0e6f0; padding:8px 12px; border-radius:6px; font-size:12px; outline:none; }
+  .search-box:focus { border-color:#3b82f6; }
+
+  #graph-container { position:fixed; top:var(--tb,56px); left:320px; right:0; bottom:0; overflow:hidden; }
+  #graph-container canvas { display:block; width:100%; height:100%; touch-action:none; }
+
+  .article-card { position:fixed; top:calc(var(--tb,56px) + 14px); right:20px; width:410px; max-height:calc(100vh - 90px); background:#0f1729; border:1px solid #2a3a5c; border-radius:10px; padding:20px; overflow-y:auto; z-index:95; box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; }
+  .article-card.active { display:block; }
+  .article-card .close { position:absolute; top:12px; right:14px; cursor:pointer; color:#6b7588; font-size:18px; }
+  .article-card .close:hover { color:#fff; }
+  .article-card h2 { font-size:15px; font-weight:600; color:#e0e6f0; margin:0 0 12px 0; padding-right:24px; line-height:1.4; }
+  .meta-row { display:flex; gap:16px; font-size:11px; color:#8a95a8; margin-bottom:12px; flex-wrap:wrap; }
+  .meta-row span { display:inline-flex; align-items:center; gap:4px; }
+  .meta-row b { color:#c0c8d8; font-weight:500; }
+  .tag { display:inline-block; background:#1e2a4a; color:#9aa5b4; padding:3px 8px; border-radius:4px; font-size:11px; margin:2px 4px 2px 0; }
+  .abstract { font-size:12px; line-height:1.6; color:#b0b8c8; margin:12px 0; padding:12px; background:#0a0f1e; border-left:3px solid #2563eb; border-radius:4px; }
+  .metrics { display:flex; gap:8px; margin:12px 0; }
+  .metric { flex:1; background:#0a0f1e; border:1px solid #1e2a4a; border-radius:6px; padding:8px; text-align:center; position:relative; }
+  .metric span { display:block; font-size:10px; text-transform:uppercase; color:#6b7588; letter-spacing:.5px; }
+  .metric b { display:block; font-size:15px; color:#6ea8ff; margin-top:4px; }
+  .metric .tr { display:block; font-size:9px; text-transform:none; letter-spacing:0; color:#8a95a8; margin-top:1px; }
+  .metric .hint { display:block; font-size:9px; color:#6b7588; margin-top:3px; line-height:1.3; }
+  .metric .dot { position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; }
+  .metrics-context { font-size:10px; color:#6b7588; text-align:center; margin:-6px 0 10px; }
+  .connections-list { margin-top:12px; }
+  .connections-list h4 { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6ea8ff; margin:12px 0 8px 0; }
+  .conn-item { padding:6px 8px; background:#0a0f1e; border-radius:4px; margin-bottom:4px; font-size:11px; cursor:pointer; transition:background .15s; }
+  .conn-item:hover { background:#1a2340; }
+  .conn-item .type { display:inline-block; font-size:9px; padding:2px 6px; border-radius:3px; margin-right:6px; text-transform:uppercase; letter-spacing:.5px; }
+  .type-cite { background:#7c3aed; color:#fff; }
+  .type-coauthor { background:#059669; color:#fff; }
+  .type-topic { background:#d97706; color:#fff; }
+  .card-actions { display:flex; gap:6px; margin:12px 0 4px; flex-wrap:wrap; }
+
+  .legend { position:fixed; bottom:20px; right:20px; background:#0f1729; border:1px solid #2a3a5c; border-radius:8px; padding:12px 16px; font-size:11px; z-index:80; }
+  .legend-title { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#6ea8ff; margin-bottom:8px; }
+  .legend-item { display:flex; align-items:center; gap:8px; margin-bottom:4px; color:#b0b8c8; }
+  .legend-line { width:24px; height:2px; }
+
+  .toast { position:fixed; bottom:20px; left:340px; background:#1e2a4a; border:1px solid #3b82f6; color:#e0e6f0; padding:10px 16px; border-radius:6px; font-size:12px; z-index:200; opacity:0; transform:translateY(20px); transition:all .3s; pointer-events:none; max-width:calc(100vw - 360px); }
+  .toast.show { opacity:1; transform:translateY(0); }
+  .toast.error { border-color:#ef4444; }
+  .toast.warn { border-color:#f59e0b; }
+
+  .sample-btn { width:100%; margin-top:8px; text-align:center; }
+  .year-range { padding:4px 8px; }
+  .year-range input[type=range] { width:100%; margin:4px 0; accent-color:#3b82f6; }
+  .year-labels { display:flex; justify-content:space-between; font-size:11px; color:#8a95a8; }
+  .top-list { max-height:170px; overflow-y:auto; }
+  .top-item { display:flex; align-items:center; gap:6px; padding:5px 8px; font-size:11px; border-radius:4px; cursor:pointer; }
+  .top-item:hover { background:#1a2340; }
+  .top-item .rank { color:#6b7588; width:18px; }
+  .top-item .name { flex:1; color:#c0c8d8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .top-item .val { color:#6ea8ff; font-weight:600; }
+
+  .empty-state { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#6b7588; font-size:13px; text-align:center; padding:20px; pointer-events:none; }
+  .empty-state b { color:#6ea8ff; font-size:15px; margin-bottom:8px; }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:300; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:#0f1729; border:1px solid #2a3a5c; border-radius:12px; max-width:760px; width:100%; max-height:85vh; overflow-y:auto; padding:24px 28px; position:relative; }
+  .modal.narrow { max-width:560px; }
+  .modal .close { position:absolute; top:14px; right:18px; cursor:pointer; color:#6b7588; font-size:20px; }
+  .modal .close:hover { color:#fff; }
+  .modal h2 { font-size:18px; color:#6ea8ff; margin:0 0 16px 0; }
+  .modal h3 { font-size:13px; color:#e0e6f0; margin:20px 0 8px 0; text-transform:uppercase; letter-spacing:.8px; border-bottom:1px solid #1e2a4a; padding-bottom:6px; }
+  .modal p, .modal li { font-size:12px; line-height:1.7; color:#b0b8c8; margin:6px 0; }
+  .modal ul { padding-left:20px; margin:6px 0; }
+  .modal code { background:#0a0f1e; padding:2px 6px; border-radius:3px; color:#6ea8ff; font-size:11px; }
+  .modal .example { background:#0a0f1e; border-left:3px solid #2563eb; padding:10px 14px; border-radius:4px; margin:10px 0; font-size:12px; color:#c0c8d8; }
+  .modal .example b { color:#6ea8ff; }
+  .metric-table { width:100%; border-collapse:collapse; margin:8px 0; font-size:11px; }
+  .metric-table th { text-align:left; padding:6px 8px; background:#0a0f1e; color:#6ea8ff; border-bottom:1px solid #1e2a4a; }
+  .metric-table td { padding:6px 8px; border-bottom:1px solid #141c30; color:#b0b8c8; vertical-align:top; }
+  .modal .formula { background:#0a0f1e; border:1px solid #1e2a4a; border-radius:6px; padding:8px 12px; font-family:Consolas,'Courier New',monospace; font-size:11px; color:#9ec5ff; margin:8px 0; line-height:1.6; }
+  .modal .toc { columns:2; column-gap:24px; font-size:12px; margin:8px 0 4px; }
+  .modal .toc a { color:#6ea8ff; text-decoration:none; display:block; padding:2px 0; cursor:pointer; }
+  .modal .toc a:hover { text-decoration:underline; }
+  .modal .ok { color:#10b981; } .modal .bad { color:#f87171; }
+  .modal .note { font-size:11px; color:#f59e0b; margin-top:8px; }
+
+  .report-row { display:flex; flex-direction:column; gap:6px; margin:14px 0; padding:12px; background:#0a0f1e; border:1px solid #1e2a4a; border-radius:8px; }
+  .report-row > .label { font-size:12px; color:#e0e6f0; font-weight:600; }
+  .report-row > .hint { font-size:11px; color:#6b7588; line-height:1.4; }
+  .report-row .options { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .report-row .opt { padding:6px 12px; background:#1e2a4a; border:1px solid #2e3e5c; border-radius:5px; font-size:11px; color:#c0c8d8; cursor:pointer; transition:all .15s; }
+  .report-row .opt:hover { background:#2a3a5c; }
+  .report-row .opt.active { background:#2563eb; border-color:#3b82f6; color:#fff; }
+  .report-row .opt small { display:block; font-size:9px; color:#8a95a8; margin-top:2px; }
+  .report-row .opt.active small { color:#c0d8ff; }
+
+  .selftest-table { width:100%; border-collapse:collapse; font-size:11px; margin-top:10px; }
+  .selftest-table th, .selftest-table td { padding:6px 8px; border-bottom:1px solid #1e2a4a; text-align:left; }
+  .selftest-table th { color:#6ea8ff; background:#0a0f1e; }
+  .selftest-table .ok { color:#10b981; font-weight:600; }
+  .selftest-table .fail { color:#ef4444; font-weight:600; }
+  .selftest-summary { padding:10px 14px; border-radius:6px; margin-top:12px; font-size:12px; }
+  .selftest-summary.ok { background:#0a2a1e; border:1px solid #10b981; color:#10b981; }
+  .selftest-summary.fail { background:#2a0a0a; border:1px solid #ef4444; color:#ef4444; }
+  .audit-table { width:100%; border-collapse:collapse; font-size:11px; margin-top:10px; }
+  .audit-table th, .audit-table td { padding:6px 8px; border-bottom:1px solid #1e2a4a; text-align:left; vertical-align:top; }
+  .audit-table th { color:#6ea8ff; background:#0a0f1e; }
+  .audit-table .warn { color:#f59e0b; }
+  .audit-table .err { color:#ef4444; }
+  .audit-summary { padding:10px 14px; border-radius:6px; margin-top:12px; font-size:12px; }
+  .audit-summary.ok { background:#0a2a1e; border:1px solid #10b981; color:#10b981; }
+  .audit-summary.warn { background:#2a1e0a; border:1px solid #f59e0b; color:#f59e0b; }
+
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:#0a0f1e; }
+  ::-webkit-scrollbar-thumb { background:#2e3e5c; border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:#3e4e6c; }
+
+  @media (max-width: 700px) {
+    body { overflow:hidden; }
+    .top-bar { height:auto; min-height:56px; padding:8px 10px; gap:8px; flex-wrap:wrap; }
+    .logo { font-size:13px; }
+    .logo span { display:block; margin:3px 0 0; font-size:10px; }
+    .top-stats { width:100%; margin-left:0; justify-content:space-between; gap:6px; font-size:10px; flex-wrap:wrap; }
+    .sidebar { top:var(--tb,120px); left:0; right:0; bottom:auto; width:100%; height:250px; padding:9px 12px; overflow-y:auto; border-right:0; border-bottom:1px solid #1e2a4a; }
+    .sidebar h3 { margin:9px 0 5px; }
+    .upload-zone { padding:9px; }
+    .upload-zone .icon { display:none; }
+    .sample-btn { margin-top:5px; }
+    #graph-container { top:calc(var(--tb,120px) + 250px); left:0; right:0; bottom:0; }
+    .legend { right:8px; bottom:8px; padding:8px 10px; font-size:9px; }
+    .legend-item { margin-bottom:2px; }
+    .legend-line { width:16px; }
+    .article-card { top:auto; bottom:8px; left:8px; right:8px; width:auto; max-height:55vh; padding:14px; }
+    .toast { left:8px; right:8px; bottom:8px; text-align:center; max-width:none; }
+    .btn { min-height:36px; }
+    .search-box { min-height:38px; }
+    .modal { padding:18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">📊 Academic Graph Analyzer <span>СНК Психиатрии · v2.7.4</span></div>
+  <div class="top-stats">
+    <div class="stat-item" title="Число видимых статей / всего в коллекции">Узлов: <b id="stat-nodes">0</b></div>
+    <div class="stat-item" title="Уникальные видимые пары статей со связью">Связей: <b id="stat-links">0</b></div>
+    <div class="stat-item" title="Число связных компонент среди видимых">Компонент: <b id="stat-clusters">0</b></div>
+    <div class="stat-item" id="densityItem" title="Плотность видимого графа: доля уникальных связанных пар от максимально возможных.">Плотность: <b id="stat-density">0.000</b> <span class="stat-dot" id="densityDot" style="background:#6b7588"></span></div>
+    <span class="metrics-mode-badge" id="metricsModeBadge" onclick="toggleMetricsMode()" title="Клик — переключить режим расчёта метрик">Метрики: полный граф</span>
+    <button class="btn btn-mini" onclick="openManual()" title="Как читать граф и метрики">? Мануал</button>
+  </div>
+</div>
+
+<div class="sidebar">
+  <h3>📥 Импорт данных</h3>
+  <div class="upload-zone" id="uploadZone">
+    <div class="icon">📄</div>
+    <div class="text"><b>Перетащите .json или .bib</b> или нажмите для выбора</div>
+    <input type="file" id="fileInput" accept=".json,.bib,.bibtex" style="display:none">
+  </div>
+  <div style="font-size:10px;color:#6b7588;margin-top:6px;line-height:1.4;">
+    JSON — полный формат (с цитатами). BibTeX (формат библиографических записей) — из Zotero/Mendeley (без цитат). Импорт ЗАМЕНЯЕТ текущий набор (файлы не объединяются; демо тоже заменяется). Петли и цитаты на несуществующие id удаляются с предупреждением. Одинаковый id внутри файла — ошибка.
+  </div>
+  <button class="btn sample-btn" onclick="loadSampleData()">🧪 Загрузить демо-данные</button>
+  <button class="btn" onclick="downloadJsonTemplate()" style="width:100%;margin-top:6px;">📄 Скачать шаблон JSON</button>
+  <button class="btn" onclick="clearGraph()" style="width:100%;margin-top:6px;">🗑️ Очистить граф</button>
+
+  <h3>🔍 Поиск</h3>
+  <input type="text" class="search-box" id="searchBox" placeholder="Название, автор, УДК...">
+
+  <h3>📅 Диапазон лет</h3>
+  <div class="year-range">
+    <input type="range" id="yearMin" min="1900" max="2100" value="1900">
+    <input type="range" id="yearMax" min="1900" max="2100" value="2100">
+    <div class="year-labels"><span id="yearMinLabel">1900</span> — <span id="yearMaxLabel">2100</span></div>
+  </div>
+
+  <h3>🎛️ Вид</h3>
+  <div class="btn-row">
+    <button class="btn btn-mini btn-primary" data-view="force" onclick="setView('force')" title="Силовая раскладка: связанные статьи притягиваются">Force (силовая)</button>
+    <button class="btn btn-mini" data-view="timeline" onclick="setView('timeline')" title="Раскладка по годам: x — год, y — выбранная метрика">Timeline (по годам)</button>
+  </div>
+  <div class="btn-row" style="margin-top:6px;">
+    <button class="btn btn-mini btn-primary" data-entity="articles" onclick="setEntity('articles')">Статьи</button>
+    <button class="btn btn-mini" data-entity="authors" onclick="setEntity('authors')">Авторы</button>
+  </div>
+  <div id="timelineControls" style="display:none;margin-top:6px;">
+    <div class="filter-item">
+      <span class="label" style="font-size:11px">Ось Y</span>
+      <select id="timelineY" style="background:#0a0f1e;color:#e0e6f0;border:1px solid #2e3e5c;border-radius:4px;font-size:11px;padding:3px 6px;">
+        <option value="degree">Degree (степень)</option>
+        <option value="pagerank">PageRank (авторитетность)</option>
+        <option value="betweenness">Betweenness (посредничество)</option>
+      </select>
+    </div>
+  </div>
+
+  <h3>🏷️ Фильтр по УДК</h3>
+  <div id="udcFilters"></div>
+
+  <h3>👥 Фильтр по авторам</h3>
+  <div id="authorFilters"></div>
+
+  <h3>🔗 Типы связей</h3>
+  <div style="font-size:10px;color:#6b7588;margin-bottom:4px;line-height:1.4;">Одна настройка для картинки и расчётов: снятая галочка убирает связи этого типа из графа (линии исчезают, раскладка перестраивается) и из всех чисел — связи, плотность, компоненты, степень, посредничество.</div>
+  <div class="filter-item"><input type="checkbox" id="showCitations" checked><span class="label">Цитирования</span></div>
+  <div class="filter-item"><input type="checkbox" id="showCoauthors" checked><span class="label">Общий автор</span></div>
+  <div class="filter-item"><input type="checkbox" id="showTopics" checked><span class="label">Общие темы</span></div>
+
+  <h3>⚙️ Настройки графа</h3>
+  <div class="filter-item"><input type="checkbox" id="showLabels" checked><span class="label">Подписи узлов</span></div>
+  <div class="filter-item">
+    <span class="label" style="font-size:11px">Мин. общих тем</span>
+    <input type="range" id="topicThreshold" min="1" max="5" value="2" style="width:80px;accent-color:#3b82f6;">
+    <b id="topicThresholdLabel" style="font-size:11px;color:#6ea8ff">2</b>
+  </div>
+  <div class="filter-item" title="PageRank (авторитетность) по цитированиям — классический. По всем связям — центральность (centrality) на симметризованном графе, не классический PageRank.">
+    <input type="checkbox" id="pagerankAllLinks">
+    <span class="label" style="font-size:11px">PageRank по всем связям</span>
+  </div>
+
+  <h3>🏆 Топ узлов</h3>
+  <div class="btn-row" style="margin-bottom:6px;">
+    <button class="btn btn-mini" data-top="degree" onclick="showTop('degree')" title="Степень: доля коллекции, с которой статья связана">Degree (степень)</button>
+    <button class="btn btn-mini" data-top="betweenness" onclick="showTop('betweenness')" title="Посредничество: доля кратчайших путей через статью">Betweenness (посредн.)</button>
+    <button class="btn btn-mini" data-top="pagerank" onclick="showTop('pagerank')" title="Авторитетность: вес с учётом того, кто цитирует">PageRank (авторитет.)</button>
+  </div>
+  <div class="top-list" id="topList"></div>
+
+  <h3>📤 Экспорт</h3>
+  <button class="btn" onclick="exportGraph()" style="width:100%;margin-bottom:6px;">💾 Скачать JSON графа</button>
+  <button class="btn" onclick="exportVisibleGraph()" style="width:100%;margin-bottom:6px;">💾 JSON только видимых</button>
+  <button class="btn" onclick="exportPNG({whiteBg:false,fitAll:true})" style="width:100%;margin-bottom:6px;">🖼️ PNG (тёмный)</button>
+  <button class="btn" onclick="exportPNG({whiteBg:true,fitAll:true})" style="width:100%;margin-bottom:6px;">🖼️ PNG (белый, для печати)</button>
+  <button class="btn btn-primary" onclick="openReportDialog()" style="width:100%;">📄 PDF-отчёт</button>
+</div>
+
+<div id="graph-container">
+  <div class="empty-state" id="emptyState" style="display:none">
+    <b>Граф пуст</b>
+    Перетащите .json или .bib в зону загрузки,<br>или нажмите «Демо-данные» в сайдбаре.<br>
+    <span style="margin-top:12px;font-size:11px;">Не знаете, что означают цифры? <a href="#" onclick="openManual();return false;" style="color:#6ea8ff;">Откройте мануал</a>.</span>
+  </div>
+</div>
+
+<div class="article-card" id="articleCard">
+  <span class="close" onclick="closeCard()">✕</span>
+  <h2 id="cardTitle">—</h2>
+  <div class="meta-row">
+    <span>👥 <b id="cardAuthors">—</b></span>
+    <span>📅 <b id="cardYear">—</b></span>
+    <span>📚 <b id="cardUdc">—</b></span>
+  </div>
+  <div id="cardTopics"></div>
+  <div class="abstract" id="cardAbstract">—</div>
+  <div id="cardMetrics"></div>
+  <div class="card-actions">
+    <button class="btn btn-mini" onclick="focusNeighbors(1)">👁️ Соседи 1 шаг</button>
+    <button class="btn btn-mini" onclick="focusNeighbors(2)">👁️ Соседи 2 шага</button>
+    <button class="btn btn-mini" onclick="resetSeed()">↩️ Весь граф</button>
+  </div>
+  <div class="connections-list" id="cardConnections"></div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Типы связей</div>
+  <div class="legend-item"><div class="legend-line" style="background:#7c3aed;"></div><span>Цитирование (направленное)</span></div>
+  <div class="legend-item"><div class="legend-line" style="background:#059669;"></div><span>Общий автор</span></div>
+  <div class="legend-item"><div class="legend-line" style="background:#d97706;"></div><span>Общие темы</span></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Manual -->
+<div class="modal-overlay" id="manualModal" onclick="if(event.target===this)closeManual()">
+  <div class="modal">
+    <span class="close" onclick="closeManual()">✕</span>
+    <h2>📖 Руководство: как устроен граф и как читать цифры</h2>
+    <p>Программа берёт список публикаций, строит из него <b>сеть</b> (статья = узел, связь = линия) и считает несколько показателей структуры. Она показывает, <b>как связана коллекция</b>, — а не насколько хороши работы. Высокий показатель — не «высокий уровень доказательности»: это наукометрия, а не оценка качества исследования.</p>
+    <div class="toc">
+      <a onclick="goM('m1')">1. Как строится граф</a>
+      <a onclick="goM('m2')">2. Узлы, размер, раскладки</a>
+      <a onclick="goM('m3')">3. Изолированные статьи</a>
+      <a onclick="goM('m4')">4. Метрики: определения и формулы</a>
+      <a onclick="goM('m5')">5. Как читать значения</a>
+      <a onclick="goM('m6')">6. Что на что влияет (таблица)</a>
+      <a onclick="goM('m7')">7. Импорт, замена данных, хранение</a>
+      <a onclick="goM('m8')">8. Автоматическая очистка данных</a>
+      <a onclick="goM('m9')">9. Нормализация: пределы</a>
+      <a onclick="goM('m10')">10. Проверка: что и чем подтверждено</a>
+      <a onclick="goM('m10b')">Экспорт: PNG и PDF</a>
+      <a onclick="goM('m11')">11. Осторожность при выводах</a>
+      <a onclick="goM('m13')">Словарь терминов (англ. → рус.)</a>
+    </div>
+
+    <h3 id="m1">1. Как строится граф</h3>
+    <p>Для каждой пары статей программа проверяет три правила. Если правило выполнено — между статьями появляется связь соответствующего типа. Одна пара может быть связана несколькими типами сразу.</p>
+    <table class="metric-table">
+      <tr><th>Тип связи</th><th>Правило</th><th>Направление, вес</th><th>Цвет</th></tr>
+      <tr><td><b>Цитирование</b></td><td>В поле <code>citations</code> статьи A указан id статьи B (и B есть в наборе).</td><td>Направленная A → B. Вес 3.</td><td>Фиолетовая стрелка</td></tr>
+      <tr><td><b>Общий автор</b></td><td>У двух статей совпадает хотя бы один автор <i>после нормализации</i> (п. 9).</td><td>Без направления. Вес = 1 + число общих авторов.</td><td>Зелёная</td></tr>
+      <tr><td><b>Общие темы</b></td><td>Совпадает не меньше N тем (ползунок «Мин. общих тем», по умолчанию 2). Темы сравниваются в нижнем регистре.</td><td>Без направления. Вес = 0,5 × число общих тем.</td><td>Оранжевая</td></tr>
+    </table>
+    <p><b>Почему так.</b> Цитирование — самая «сильная» и единственная направленная связь (кто на кого опирается). Общий автор и общие темы — косвенные признаки близости, поэтому порог по темам настраивается: при пороге 1 любая случайная общая тема создаёт связь, и граф превращается в «комок».</p>
+    <p>Число связей в шапке — это число <b>уникальных пар статей</b>: если A и B связаны и цитированием, и общим автором, это одна пара. Связь «статья сама с собой» не создаётся и не считается (п. 8).</p>
+    <p><b>Включение и выключение типов.</b> Блок «Типы связей» в боковой панели — одна настройка и для картинки, и для расчётов. Снимая галочку, вы убираете связи этого типа из графа: линии исчезают, раскладка перестраивается, число связей, плотность, компоненты, степень (Degree) и посредничество (Betweenness) пересчитываются, а статьи, оставшиеся без связей, переходят в «изолированные». Что нарисовано — то и посчитано: скрытого рассогласования между картинкой и цифрами нет.</p>
+
+    <h3 id="m2">2. Узлы, размер, раскладки</h3>
+    <ul>
+      <li><b>Цвет узла</b> = УДК.</li>
+      <li><b>Размер узла</b> = 8 + 3 × (число цитат, которые эта статья <i>даёт</i> другим статьям набора). Это <b>не</b> Degree (степень) и не PageRank (авторитетность) — только объём собственного списка ссылок внутри вашей коллекции.</li>
+      <li><b>Force (силовая раскладка)</b> — физическая симуляция: связанные узлы притягиваются (целевое расстояние: цитирование 105, общий автор 135, общие темы 165), все узлы отталкиваются, слабая сила тянет к центру, трение гасит колебания; примерно через 260 шагов раскладка «успокаивается». <b>Положение на экране не означает ни важность, ни год</b> — только «близко = связаны, далеко = нет». Одна и та же сеть может лечь по-разному.</li>
+      <li><b>Timeline (раскладка по годам)</b> — фиксированная раскладка: <b>x = год</b>, <b>y = выбранная метрика</b> (от минимума к максимуму среди неизолированных статей); статьи одного года разведены по вертикали. Слева старые работы, справа новые.</li>
+      <li><b>Авторы</b> — узлы-авторы, связь = совместная публикация. Кластеры — рабочие группы, мосты — связующие авторы, одиночки — без соавторов. Метрики в этом режиме считаются по сети соавторства.</li>
+    </ul>
+
+    <h3 id="m3">3. Изолированные статьи</h3>
+    <p>Статья без единой связи (ни цитат, ни общего автора, ни достаточного числа общих тем) не участвует в симуляции и выносится в отдельную полосу внизу. Правила:</p>
+    <ul>
+      <li>Они <b>всегда видны</b>: слайдер лет их не скрывает (год не определяет отсутствие связей). Скрывает их только фокус «Соседи» — как и любой узел вне окрестности выбранной статьи.</li>
+      <li>Они <b>входят в расчёт</b>: считаются в числе узлов n в шапке и в плотности; в режиме метрик «видимый граф» входят в n при нормировке (у них степень (Degree) и посредничество (Betweenness) равны 0).</li>
+      <li>Изолированность пересчитывается при смене порога «Мин. общих тем», фильтров УДК/авторов и <b>типов связей</b>: чем меньше связей включено, тем больше изолированных (если выключить все типы, изолированными станут все статьи).</li>
+    </ul>
+
+    <h3 id="m4">4. Метрики: определения и формулы</h3>
+    <p>Обозначения: <b>n</b> — число узлов в расчёте, <b>k(v)</b> — число различных соседей узла v. Направление связей при расчёте Degree (степень), Betweenness (посредничество), плотности и компонент <b>игнорируется</b> (две статьи связаны — значит соединены); направление используется только в PageRank.</p>
+
+    <p><b>Плотность</b> — какая доля возможных пар реально связана (аналогия: доля реализованных контактов среди всех возможных):</p>
+    <div class="formula">плотность = m / [ n(n−1)/2 ],   m — число уникальных связанных пар</div>
+
+    <p><b>Компоненты связности</b> — число «островов»: групп, внутри которых из любой статьи можно дойти до любой по цепочке связей. 1 компонента — коллекция цельная; 6 — шесть несвязанных групп (изолированная статья — тоже компонента).</p>
+
+    <p><b>Degree (степень)</b> — доля коллекции, с которой статья непосредственно связана (аналогия: число контактных лиц, делённое на максимально возможное):</p>
+    <div class="formula">Degree(v) = k(v) / (n−1)       от 0 до 1</div>
+    <p>Считаются <b>уникальные соседи</b>: три связи с одной и той же статьёй дают k = 1.</p>
+
+    <p><b>Betweenness (посредничество)</b> — насколько статья лежит «на пути» между другими (аналогия: узел маршрутизации пациентов — через него проходит много маршрутов). Для каждой пары <i>других</i> статей берутся кратчайшие цепочки связей; считается доля тех, что проходят через v. Алгоритм Брандеса (быстрый способ посчитать все кратчайшие пути), нормировка как в networkx (библиотека анализа сетей для Python) для неориентированного графа:</p>
+    <div class="formula">Betweenness(v) = Σ σst(v)/σst  /  [ (n−1)(n−2)/2 ]     по парам s,t ≠ v
+σst — число кратчайших цепочек s→t, σst(v) — из них через v      от 0 до 1</div>
+    <p>Высокий Betweenness (посредничество) при низком Degree (степень) — «мост» между группами: связей мало, но убери статью — группы разойдутся.</p>
+
+    <p><b>PageRank (авторитетность)</b> — вес статьи с учётом того, кто на неё ссылается (аналогия: ссылка из авторитетного источника весит больше, чем из случайного). Использует <b>направление цитат</b>: статья A передаёт часть своего веса тем, кого цитирует.</p>
+    <div class="formula">PR(i) = (1−d)/n + d · Σ PR(j) / исх(j)     по всем j, цитирующим i
+d = 0,85 (коэффициент затухания);  статьи без исходящих цитат («висячие» узлы) раздают свой вес всем поровну;  40 итераций</div>
+    <ul>
+      <li>Среднее значение равно 1/n; в 2–3 раза выше среднего — заметный «авторитет».</li>
+      <li>Если в наборе нет цитат (например, BibTeX из Zotero) — PageRank <b>неинформативен</b>: все значения равны 1/n, программа это помечает.</li>
+      <li>Галочка «PageRank по всем связям» добавляет общих авторов и общие темы как двусторонние связи. Это уже <b>не классический PageRank</b>, а центральность по близости; в карточке такой PageRank отмечен звёздочкой (PageRank*). Если пара связана двумя типами, её вес в этом расчёте удваивается.</li>
+      <li>Связь «статья цитирует саму себя» исключена из всех метрик (п. 8).</li>
+    </ul>
+
+    <h3 id="m5">5. Как читать значения</h3>
+    <p class="note">Пороги ориентировочные (практика малых коллекций 20–100 статей), а не формальная классификация. Цвет точки в карточке: серый — значение не информативно, жёлтый — слабое, зелёный — выраженное.</p>
+    <table class="metric-table">
+      <tr><th>Показатель</th><th>Подписи в программе</th></tr>
+      <tr><td><b>Плотность</b></td><td>0 — нет связей; &lt;0,05 — разреженный; 0,05–0,20 — типично; 0,20–0,40 — плотный; &gt;0,40 — очень плотный; при n &lt; 10 — «малая выборка» (значения нестабильны).</td></tr>
+      <tr><td><b>Degree (степень)</b></td><td>0 — изолирована; &lt;0,1 — периферия; 0,1–0,3 — активный участник; ≥0,3 — хаб.</td></tr>
+      <tr><td><b>Betweenness (посредничество)</b></td><td>&lt;0,01 — не участвует в путях; 0,01–0,05 — слабый посредник; 0,05–0,20 — заметный посредник; ≥0,20 — много путей через неё.</td></tr>
+      <tr><td><b>PageRank (авторитетность)</b></td><td>до 1,2× от среднего — ниже среднего; 1,2–2,5× — выше среднего; от 2,5× — «авторитет».</td></tr>
+    </table>
+    <div class="example"><b>Пример.</b> Два кластера: социология (Granovetter, 1973) и физика сетей (Barabási &amp; Albert, 1999). Обзорная статья, которая ссылается на обе группы, имеет высокий <b>Betweenness</b> при умеренном Degree — это мост. Классическая работа, на которую ссылаются все, имеет высокий <b>PageRank</b> и <b>Degree</b>, но Betweenness может быть низким — все пути идут к ней, а не через неё.</div>
+
+    <h3 id="m6">6. Что на что влияет</h3>
+    <p>Переключатель в шапке («Метрики: полный граф / видимый граф») задаёт, по каким узлам считаются Degree (степень), Betweenness (посредничество) и PageRank (авторитетность):</p>
+    <ul>
+      <li><b>Полный граф (по умолчанию)</b> — по всем статьям, <b>кроме скрытых фильтрами УДК и авторов</b> (эти фильтры пересобирают граф). Слайдер лет, фокус «Соседи» и поиск на метрики не влияют, поэтому значения стабильны и подходят для отчёта.</li>
+      <li><b>Видимый граф</b> — только по тем узлам, которые видны сейчас: учитываются слайдер лет и фокус «Соседи». Значения меняются при движении слайдера — это не ошибка: набор узлов другой, и нормировка (n) другая.</li>
+    </ul>
+    <p>Числа в шапке (узлы, связи, плотность, компоненты) всегда считаются по <b>видимым</b> узлам и <b>включённым типам связей</b> (блок «Типы связей»). Правило видимости одно для шапки, метрик режима «видимый граф», PDF-отчёта, PNG, экспорта «только видимых» и рисунка.</p>
+    <table class="metric-table">
+      <tr><th>Действие</th><th>Рисунок</th><th>Шапка (узлы, связи, плотность, компоненты)</th><th>Метрики «полный граф»</th><th>Метрики «видимый граф»</th></tr>
+      <tr><td>Фильтр УДК / авторов</td><td>да</td><td>да</td><td>да</td><td>да</td></tr>
+      <tr><td>Порог «Мин. общих тем»</td><td>да</td><td>да</td><td>да</td><td>да</td></tr>
+      <tr><td>Слайдер лет</td><td>да (кроме изолированных)</td><td>да</td><td>нет</td><td>да</td></tr>
+      <tr><td>Фокус «Соседи 1/2 шага»</td><td>да</td><td>да</td><td>нет</td><td>да</td></tr>
+      <tr><td>Поиск</td><td>только подсветка</td><td>нет</td><td>нет</td><td>нет</td></tr>
+      <tr><td>Галочки «Типы связей» (цитирования / общий автор / общие темы)</td><td>да (линии исчезают, раскладка перестраивается)</td><td>да</td><td>да</td><td>да</td></tr>
+      <tr><td>Галочка «Подписи узлов»</td><td>да (только подписи)</td><td>нет</td><td>нет</td><td>нет</td></tr>
+      <tr><td>«PageRank по всем связям»</td><td>нет</td><td>нет</td><td>да (PageRank)</td><td>да (PageRank)</td></tr>
+    </table>
+    <p><b>Почему тип связи — единая настройка.</b> Раньше можно было «скрыть» линии, оставив их в расчётах, и тогда картинка не соответствовала цифрам. Теперь расчёт и рисунок всегда опираются на одни и те же связи; выключив, например, общих авторов, вы видите сеть только по цитированиям и темам и получаете метрики именно для неё. Активные настройки записываются в PDF-отчёт.</p>
+
+    <h3 id="m7">7. Импорт, замена данных, хранение</h3>
+    <ul>
+      <li><b>Импорт заменяет набор.</b> Загрузка файла заменяет текущие статьи (в том числе демо и ваши прежние); программа сообщает, сколько статей заменено. Файлы <b>не объединяются автоматически</b>. Чтобы объединить: скачайте «JSON графа» или откройте свои файлы, добавьте элементы массива <code>articles</code> из одного в другой (id должны быть уникальны — повтор внутри файла останавливает импорт с ошибкой) и загрузите объединённый файл.</li>
+      <li>При загрузке нового набора <b>диапазон лет сбрасывается</b> на годы новых данных, а фокус «Соседи» снимается и фильтры УДК/авторов очищаются — иначе старые настройки могли бы молча скрыть часть статей. Шапка показывает «N / всего», если что-то скрыто.</li>
+      <li><b>Форматы.</b> JSON (с цитатами; шаблон — кнопка «Скачать шаблон JSON») и BibTeX (формат библиографических записей из Zotero/Mendeley; цитаты не извлекаются, кроме поля crossref — ссылки записи на родительскую).</li>
+      <li><b>Хранение.</b> Ваши данные сохраняются только в браузере этого компьютера (локальное хранилище), на сервер ничего не отправляется. Демо-данные не сохраняются. «Очистить граф» удаляет и сохранённую копию. Данные старых версий (2.4–2.7.2) подхватываются автоматически. Перед обновлением файла программы всё равно сделайте «Скачать JSON графа» — это единственная гарантированная резервная копия.</li>
+    </ul>
+
+    <h3 id="m8">8. Автоматическая очистка данных при импорте</h3>
+    <table class="metric-table">
+      <tr><th>Что найдено</th><th>Что делает программа</th><th>Почему</th></tr>
+      <tr><td><b>Петля:</b> статья цитирует саму себя (<code>art_037 → art_037</code>)</td><td>Удаляет цитату, показывает предупреждение, фиксирует в журнале аудита и PDF-отчёта.</td><td>Чаще всего это ошибка данных. Петля не создаёт ни пути, ни нового соседа; если её учесть, Degree перестанет быть долей реальных соседей k/(n−1), а число связей и плотность в шапке окажутся завышенными на 1. Это <b>не то же самое</b>, что цитирование автором своей прежней работы (разные статьи с общим автором): такая связь нормальна и сохраняется.</td></tr>
+      <tr><td><b>Цитата на несуществующий id</b></td><td>Удаляет цитату, предупреждает, фиксирует в журнале.</td><td>Связь некуда вести. Число удалённых указано — проверьте опечатки в id.</td></tr>
+      <tr><td><b>Цитата «в будущее»</b> (год цитируемой позже цитирующей)</td><td>Оставляет, только предупреждает.</td><td>Для препринтов (рукописей до публикации), early access (раннего онлайн-доступа) и статей «in press» («в печати») это допустимо; решение за вами.</td></tr>
+      <tr><td>Повторяющийся id</td><td>Останавливает импорт с ошибкой.</td><td>Иначе две разные статьи слились бы в один узел.</td></tr>
+    </table>
+    <p>Все предупреждения импорта показываются <b>одним сообщением</b> (оно висит дольше обычного). Полный перечень — кнопка «Аудит данных» в конце руководства и раздел «5» PDF-отчёта.</p>
+
+    <h3 id="m9">9. Нормализация авторов и тем: пределы</h3>
+    <p>Приведение имён — эвристика, а не справочник. Что она делает: схлопывает пробелы; для формы «Фамилия И.О.» ставит инициалам единый вид «Фамилия И. О.» (в том числе «Иванов ИИ», «Иванов И.И», «Петров-Водкин А.Б.»); темы — в нижний регистр. Чего <b>не</b> делает (ожидаемое поведение, а не ошибка):</p>
+    <ul>
+      <li><b>Строчные инициалы и фамилия</b> («сидоров а.а.») — не распознаются, остаются отдельным автором.</li>
+      <li><b>«Фамилия, Имя»</b> («Smith, John K.») — не приводится к «Smith J. K.».</li>
+      <li><b>Фамилия заглавными</b> («ИВАНОВ И.И.») — инициалы выровняются, но регистр фамилии не меняется (так названия организаций вроде «ВОЗ ООН» не искажаются), поэтому это другой автор, чем «Иванов И. И.».</li>
+      <li><b>Инициалы впереди</b> («И.И. Иванов») — порядок сохраняется, это другой автор, чем «Иванов И. И.».</li>
+      <li><b>Однофамильцы с одинаковыми инициалами сольются</b> в одного автора — без идентификатора (ORCID — международный идентификатор исследователя) различить их нельзя.</li>
+      <li><b>Темы-синонимы</b>: «PTSD», «ПТСР» и «посттравматическое стрессовое расстройство» — три разные темы; «depression» ≠ «депрессия». Нужен тезаурус; для связей по темам лучше заранее привести ключевые слова к одному виду.</li>
+    </ul>
+    <p>Последствие для расчётов: несмерженные варианты <b>занижают</b> число общих авторов/тем (связей меньше, чем есть на самом деле), а слитые однофамильцы — <b>завышают</b>. «Аудит данных» показывает авторов вне шаблона и пары с одинаковой фамилией — посмотрите их перед выводами.</p>
+
+    <h3 id="m10">10. Проверка: что и чем подтверждено</h3>
+    <p><b>Встроенная самопроверка</b> (кнопка ниже) прогоняет 39 тестов с известными ответами: цепочки, звезда, путь, полный граф K4 (Betweenness), параллельные связи и петли (число уникальных пар и соседей), изолированные узлы в нормировке, PageRank на двух статьях (эталон networkx), импорт (удаление петель и фантомных цитат, журнал, предупреждения), диапазон лет, правило видимости узлов, нормализацию авторов и построение связей по включённым типам (в том числе «все выключены → связей нет»). Она проверяет <b>формулы и правила программы</b>, а не ваши данные.</p>
+    <p><b>Сверка с networkx 3.7</b> на синтетическом наборе из 50 статей (в нём намеренно заложены петля, фантомные и «будущие» цитаты, варианты написания авторов и тем, 3 изолированных статьи). Связи собраны независимо по правилам п. 1 и сравнены с программой:</p>
+    <table class="metric-table">
+      <tr><th>Что сравнивалось</th><th>Результат</th></tr>
+      <tr><td>Набор связей (194 связи, 182 уникальные пары, плотность 0,1486, 6 компонент, 3 изолированных)</td><td class="ok">совпал полностью, расхождений 0</td></tr>
+      <tr><td>Degree, Betweenness (все 50 узлов)</td><td class="ok">максимальное расхождение ≤ 6·10⁻¹⁷ (машинная точность)</td></tr>
+      <tr><td>PageRank</td><td class="ok">максимальное расхождение 3·10⁻⁵ (программа делает фиксированные 40 итераций, networkx — до сходимости)</td></tr>
+    </table>
+    <p><b>Отдельно проверено в тестовой среде</b> (эмулятор браузера jsdom с настоящим холстом): выключение типов связей меняет сам граф (на тестовом наборе: все типы — 7 цитирований, 179 общих авторов, 8 общих тем, 3 изолированных; без цитирований — 181 пара, 7 компонент, 4 изолированных; все выключены — связей 0, изолированы все 50), фильтр УДК сохраняется при смене порога тем, PNG сохраняется размером 3000×2000 с подписями, легендой и полосой изолированных статей.</p>
+    <p><b>Что этой проверкой не покрыто:</b> работа на реальном телефоне (жесты масштабирования), визуальная точность отрисовки на разных экранах, скорость на сотнях статей (на 50 статьях расчёт мгновенный; Betweenness растёт примерно как n·m), смысловое качество ваших данных. Первое, что стоит сделать с новым файлом, — нажать «Аудит данных».</p>
+
+    <h3 id="m10b">Экспорт: PNG и PDF</h3>
+    <ul>
+      <li><b>PNG</b> сохраняется фиксированного размера 3000×2000 px (не зависит от размера окна), в тёмном или белом (для печати) варианте. В нём: заголовок, легенда включённых типов связей и цветов УДК, <b>названия статей</b> у узлов (длинные сокращаются до 40 знаков), полоса изолированных статей внизу. Содержимое = то, что вы сейчас видите: фильтры УДК/авторов, слайдер лет, фокус «Соседи», включённые типы связей, подсветка поиска.</li>
+      <li><b>Подписи расставляются автоматически</b>: сначала у самых связных статей; если подпись налезает на уже поставленную, она пропускается. После сохранения программа сообщает «Подписи: X из Y». Чтобы подписать больше, сузьте набор (УДК, годы, фокус «Соседи») и сохраните ещё раз. На экране подписи скрываются при сильном отдалении, а в PNG выводятся всегда (если включена галочка «Подписи узлов»).</li>
+      <li><b>PDF-отчёт</b> показывает граф чёрно-белым с <b>номерами</b> узлов и таблицу «номер → название → метрики»; для плотных графов этот вариант читается лучше, чем подписи на рисунке.</li>
+    </ul>
+
+    <h3 id="m11">11. Осторожность при выводах</h3>
+    <ul>
+      <li>Метрики описывают <b>структуру вашей выборки</b>: если коллекция собрана по одному запросу, «центральность» отражает запрос, а не всю литературу. Статья, которую цитируют все остальные вне набора, здесь останется «на периферии».</li>
+      <li>При n &lt; 10 значения нестабильны; для коллекций 20–100 статей плотность 0,05–0,20 — типичный диапазон.</li>
+      <li>Режим «видимый граф» удобен для исследования («что центрально именно в 2023–2024?»), «полный» — для отчёта и ссылок на цифры. В отчёте указаны режим, типы связей и активные фильтры.</li>
+      <li>Число связей, плотность и метрики зависят от порога общих тем и от того, какие типы связей вы включили. Одна и та же коллекция при другом пороге — другая сеть; фиксируйте настройки.</li>
+    </ul>
+
+    <h3 id="m13">Словарь терминов (английский → русский)</h3>
+    <table class="metric-table">
+      <tr><th>Термин</th><th>Перевод и пояснение</th></tr>
+      <tr><td>Degree</td><td>степень — доля коллекции, с которой статья непосредственно связана</td></tr>
+      <tr><td>Betweenness</td><td>посредничество — доля кратчайших путей между другими статьями, проходящих через данную</td></tr>
+      <tr><td>PageRank</td><td>авторитетность — вес статьи с учётом того, кто на неё ссылается (название алгоритма)</td></tr>
+      <tr><td>Centrality</td><td>центральность — общее название показателей «насколько узел важен в сети»</td></tr>
+      <tr><td>Force / Timeline</td><td>силовая раскладка / раскладка по годам</td></tr>
+      <tr><td>Hub</td><td>хаб — узел с очень большим числом связей</td></tr>
+      <tr><td>Self-loop / self-citation</td><td>петля (статья цитирует саму себя) / самоцитирование (автор цитирует свою прежнюю работу — это нормально)</td></tr>
+      <tr><td>Cite / coauthor / topic</td><td>цитирование / общий автор / общая тема — типы связей</td></tr>
+      <tr><td>Component</td><td>компонента связности — группа статей, соединённых цепочками связей</td></tr>
+      <tr><td>Damping factor</td><td>коэффициент затухания PageRank (0,85)</td></tr>
+      <tr><td>Dangling node</td><td>«висячий» узел — статья без исходящих цитат</td></tr>
+      <tr><td>Box plot</td><td>ящик с усами — график разброса значений</td></tr>
+      <tr><td>Preprint / early access / in press</td><td>препринт (рукопись до публикации) / ранний онлайн-доступ / «в печати» (принята, ещё не вышла)</td></tr>
+      <tr><td>BibTeX / crossref</td><td>формат библиографических записей (Zotero, Mendeley) / поле «родительская запись»</td></tr>
+      <tr><td>ORCID</td><td>международный идентификатор исследователя</td></tr>
+      <tr><td>networkx</td><td>библиотека анализа сетей для Python — эталон для сверки расчётов</td></tr>
+      <tr><td>Brandes algorithm</td><td>алгоритм Брандеса — быстрый расчёт посредничества</td></tr>
+    </table>
+
+    <h3 id="m12">Проверка и аудит</h3>
+    <p><b>Проверить формулы</b> — контрольные графы с эталонами networkx и правила импорта (п. 10). <b>Аудит данных</b> — проверка вашего набора: изолированные статьи (с учётом включённых типов связей), удалённые при импорте петли и фантомные цитаты, цитаты в будущее, пустые поля, авторы вне шаблона, темы-синонимы, число компонент, возможные дубликаты авторов. Результат попадает в PDF-отчёт (раздел «5. Исключения и предупреждения»).</p>
+    <button class="btn btn-primary" onclick="runSelfTest()" style="margin-top:8px;">🧪 Проверить формулы</button>
+    <button class="btn btn-primary" onclick="runDataAudit()" style="margin-top:8px;margin-left:6px;">🔍 Аудит данных</button>
+    <div id="selfTestResult"></div>
+    <div id="dataAuditResult"></div>
+    <p style="margin-top:20px;color:#6b7588;font-size:11px;">Для коллекции 20–100 статей плотность 0.05–0.20 — типичный диапазон.</p>
+  </div>
+</div>
+
+<!-- Report dialog -->
+<div class="modal-overlay" id="reportModal" onclick="if(event.target===this)closeReportDialog()">
+  <div class="modal narrow">
+    <span class="close" onclick="closeReportDialog()">✕</span>
+    <h2>📄 Настройки PDF-отчёта</h2>
+    <p style="font-size:11px;color:#8a95a8;">После «Сформировать» откроется окно с отчётом. В нём нажмите «Печать» → «Сохранить как PDF».</p>
+
+    <div class="report-row">
+      <div class="label">Формат страницы</div>
+      <div class="hint">A4 портрет — стандарт для отчётов. A4 альбом — удобнее для широких графов.</div>
+      <div class="options" id="optFormat">
+        <div class="opt active" data-val="portrait">A4 портрет<small>210×297 мм</small></div>
+        <div class="opt" data-val="landscape">A4 альбом<small>297×210 мм</small></div>
+      </div>
+    </div>
+
+    <div class="report-row">
+      <div class="label">Какие узлы</div>
+      <div class="hint">«Только видимые» — после фильтров. «Все статьи» — весь граф.</div>
+      <div class="options" id="optNodes">
+        <div class="opt active" data-val="visible">Только видимые<small>после фильтров</small></div>
+        <div class="opt" data-val="all">Все статьи<small>весь граф</small></div>
+      </div>
+    </div>
+
+    <div class="report-row">
+      <div class="label">Список связей</div>
+      <div class="hint">Отдельная таблица «A → B, тип, вес».</div>
+      <div class="options" id="optLinks">
+        <div class="opt active" data-val="no">Не включать<small>компактно</small></div>
+        <div class="opt" data-val="yes">Включить<small>+1–3 страницы</small></div>
+      </div>
+    </div>
+
+    <div class="report-row">
+      <div class="label">Аудит данных</div>
+      <div class="hint">Раздел «5. Исключения и предупреждения»: изолированные, битые цитаты, не нормализованные авторы и т. д.</div>
+      <div class="options" id="optAudit">
+        <div class="opt active" data-val="yes">Включать<small>рекомендуется</small></div>
+        <div class="opt" data-val="no">Не включать<small>компактно</small></div>
+      </div>
+    </div>
+
+    <div class="report-row">
+      <div class="label">Графики динамики</div>
+      <div class="hint">Раздел «4.5. Динамика по годам»: гистограмма, линейный график, box plot, сравнение «влиятельные vs остальные».</div>
+      <div class="options" id="optDynamics">
+        <div class="opt active" data-val="yes">Включать<small>рекомендуется</small></div>
+        <div class="opt" data-val="no">Не включать<small>компактно</small></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="generateReport()" style="flex:1;">Сформировать</button>
+      <button class="btn" onclick="closeReportDialog()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Academic Graph Analyzer v2.7.4 — offline, zero-dependency.
+   v2.7.4: (1) «Типы связей» — одна настройка и для картинки, и для расчётов: граф перестраивается;
+   (2) PNG-экспорт: подписи узлов, легенда, фиксированный размер 3000×2000;
+   (3) переводы английских терминов в скобках (интерфейс, отчёт, мануал + словарь);
+   (4) фильтры УДК/авторов больше не сбрасываются при смене порога тем / типов связей;
+   (5) холст: полная очистка и контроль размера (ResizeObserver, возврат из фона) — исчезают «следы»;
+       высота шапки на телефоне вычисляется, а не зашита (--tb).
+   v2.7.3: (1) после импорта диапазон лет сбрасывается на годы новых данных;
+   (2) петли «статья цитирует саму себя» удаляются при импорте с предупреждением,
+   не попадают в связи/плотность; (3) одно правило видимости узлов для шапки,
+   метрик и рисунка (изолированные видны всегда, фокус «Соседи» скрывает всех вне окрестности);
+   (4) все предупреждения импорта показываются одним сообщением; (5) мануал переписан
+   (логика, формулы, что на что влияет, проверка); (6) самопроверка расширена.
+   v2.7.2: переписаны графики (без вложенных template literals,
+   с проверкой Array.isArray), изолированные показываются всегда,
+   window.open обёрнут в try/catch.
+   ============================================================ */
+
+let graphData = { nodes: [], links: [] };
+let sourceArticles = [];
+let allArticles = [];
+let udcColors = {};
+const udcPalette = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1','#14b8a6','#f43f5e'];
+let hiddenUdcs = new Set();
+let excludedAuthors = new Set();
+let searchQuery = '';
+let topicThreshold = 2;
+let yearLo = 1900, yearHi = 2100;
+let useAllLinksForPR = false;
+let viewMode = 'force';
+let entityMode = 'articles';
+let timelineY = 'degree';
+let seedNodeId = null, seedDepth = 0;
+let isDemoData = false;
+let metricsMode = 'full';
+let metricTypes = { cite: true, coauthor: true, topic: true };
+let canvas, ctx, width=0, height=0, dpr=1;
+let zoom=1, panX=0, panY=0;
+let pointerMap = new Map(), dragNode=null, panStart=null, pinchStart=null;
+let animationId=0, simulationTicks=0, selectedNode=null;
+
+let reportOpts = { format:'portrait', nodes:'visible', links:'no', audit:'yes', dynamics:'yes' };
+
+const STORAGE_KEY = 'aga_v274_state';
+const LEGACY_KEYS = ['aga_v273_state','aga_v272_state','aga_v271_state','aga_v27_state', 'aga_v261_state', 'aga_v26_state', 'aga_v25_state', 'aga_v24_state'];
+const YEAR_MIN = 1900, YEAR_MAX = 2100;
+
+const WORLD_R = 900;
+const ISO_STRIP_SCREEN_OFFSET = 100;
+const ISO_STRIP_LINE_OFFSET = 80;
+const ISO_STRIP_NODE_OFFSET = 50;
+const WORLD_Y_MAX = WORLD_R - 200;
+
+const sampleData = {
+  articles: [
+    {id:"art_1",title:"Когнитивные искажения при депрессивных расстройствах",authors:["Иванов И. И.","Петрова А. С."],udc:"159.9",topics:["депрессия","когнитивная терапия","искажения"],year:2024,abstract:"Исследование паттернов когнитивных искажений при большом депрессивном расстройстве.",citations:["art_4","art_5"]},
+    {id:"art_2",title:"Нейровизуализация префронтальной коры при шизофрении",authors:["Смирнов В. П.","Козлов Д. А."],udc:"616.89",topics:["шизофрения","нейровизуализация","префронтальная кора"],year:2023,abstract:"ФМРТ-исследование активности дорсолатеральной префронтальной коры.",citations:["art_3"]},
+    {id:"art_3",title:"Дофаминергическая гипотеза психозов: современный взгляд",authors:["Козлов Д. А.","Белова М. Н."],udc:"616.89",topics:["шизофрения","дофамин","психоз"],year:2022,abstract:"Обзор современных данных о роли дофаминовой системы.",citations:["art_5"]},
+    {id:"art_4",title:"Эффективность КПТ при тревожных расстройствах",authors:["Петрова А. С.","Новиков Р. В."],udc:"159.9",topics:["тревога","КПТ","когнитивная терапия"],year:2023,abstract:"Рандомизированное контролируемое исследование эффективности КПТ.",citations:["art_5"]},
+    {id:"art_5",title:"Мета-анализ психотерапевтических вмешательств",authors:["Новиков Р. В."],udc:"159.9",topics:["мета-анализ","психотерапия","доказательная медицина"],year:2021,abstract:"Систематический обзор и мета-анализ 47 РКИ.",citations:[]},
+    {id:"art_6",title:"Генетические маркеры шизофрении: GWAS-исследование",authors:["Белова М. Н.","Григорьев С. А."],udc:"575",topics:["шизофрения","генетика","GWAS"],year:2024,abstract:"Полногеномный поиск ассоциаций выявил 12 новых локусов.",citations:["art_3"]},
+    {id:"art_7",title:"Биомаркеры воспаления при депрессии",authors:["Иванов И. И.","Григорьев С. А."],udc:"616.89",topics:["депрессия","воспаление","биомаркеры"],year:2024,abstract:"Изучение уровня цитокинов IL-6 и TNF-α.",citations:["art_4"]},
+    {id:"art_8",title:"Психоделическая ассистированная психотерапия ПТСР",authors:["Смирнов В. П.","Петрова А. С."],udc:"615.8",topics:["ПТСР","психоделики","психотерапия"],year:2024,abstract:"Пилотное исследование применения МДМА-ассистированной психотерапии.",citations:["art_4","art_5"]}
+  ]
+};
+
+function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function udcColor(u){return udcPalette[hashString(String(u))%udcPalette.length];}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function showToast(msg,type='info',ms=4200){const t=document.getElementById('toast');t.textContent=msg;t.classList.remove('error','warn');if(type==='error')t.classList.add('error');if(type==='warn')t.classList.add('warn');t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),ms);}
+
+function normalizeAuthor(s){
+  let v=String(s).replace(/\s+/g,' ').trim();
+  const m=v.match(/^(\p{L}+(?:[ '\-]\p{L}+)*\p{Ll}\S*)\s+((?:\p{Lu}\.?\s*){1,3})$/u);
+  if(m){const ini=m[2].replace(/[.\s]/g,'');v=m[1]+' '+[...ini].map(c=>c+'.').join(' ');}
+  else v=v.replace(/(\p{Lu})\.\s*(?=\p{Lu}\.)/gu,'$1. ');
+  return v;
+}
+function normalizeTopic(s){return String(s).replace(/\s+/g,' ').trim().toLowerCase();}
+
+function normalizeArticles(articles, warnings=[], log=null){
+  if(!Array.isArray(articles))throw new Error('Ожидается массив articles');
+  const seen=new Set();
+  const out=articles.map((a,i)=>{
+    if(!a||a.id==null||typeof a.title!=='string'||!a.title.trim())throw new Error('Статья №'+(i+1)+': отсутствует id или title');
+    const id=String(a.id);if(seen.has(id))throw new Error('Повторяется идентификатор: '+id);seen.add(id);
+    const authors=Array.isArray(a.authors)?a.authors.map(normalizeAuthor).filter(Boolean):[];
+    const topics=Array.isArray(a.topics)?[...new Set(a.topics.map(normalizeTopic).filter(Boolean))]:[];
+    return {id,title:a.title.trim(),authors,udc:String(a.udc??'Без УДК').trim()||'Без УДК',topics,year:a.year??'—',abstract:String(a.abstract??'Аннотация отсутствует'),citations:Array.isArray(a.citations)?a.citations.map(String):[]};
+  });
+  const ids=new Set(out.map(a=>a.id));
+  const byId=new Map(out.map(a=>[a.id,a]));
+  let broken=0, future=0, loops=0;
+  out.forEach(a=>{
+    const valid=[];
+    a.citations.forEach(c=>{
+      // v2.7.3: петля «статья цитирует саму себя» — вероятная ошибка данных; удаляем и сообщаем
+      if(c===a.id){loops++;if(log)log.loops.push(a.id);return;}
+      if(!ids.has(c)){broken++;if(log)log.broken.push(a.id+'→'+c);return;}
+      const ya=Number(a.year), yc=Number(byId.get(c).year);
+      if(!isNaN(ya)&&!isNaN(yc)&&yc>ya)future++;
+      valid.push(c);
+    });
+    a.citations=valid;
+  });
+  if(loops>0)warnings.push('Удалено петель (статья цитирует саму себя): '+loops+' — проверьте данные');
+  if(broken>0)warnings.push('Пропущено '+broken+' цитат: целевые id не найдены');
+  if(future>0)warnings.push(future+' цитат с годом позже цитирующей (информационно; для препринтов это нормально)');
+  return out;
+}
+
+function parseBibTeX(text){
+  const entries=[];let i=0;const n=text.length;
+  while(i<n){
+    while(i<n&&text[i]!=='@')i++;if(i>=n)break;i++;
+    let type='';while(i<n&&/[A-Za-z]/.test(text[i]))type+=text[i++];type=type.toLowerCase();
+    while(i<n&&/\s/.test(text[i]))i++;
+    if(type==='comment'||type==='preamble'||type==='string'){let d=0;while(i<n){const c=text[i];if(c==='{')d++;else if(c==='}'){d--;if(d===0){i++;break;}}i++;}continue;}
+    if(text[i]!=='{')continue;i++;
+    let key='';while(i<n&&text[i]!==','&&text[i]!=='}')key+=text[i++];key=key.trim();if(text[i]===',')i++;
+    const fields={};let depth=1,buf='',fieldName=null,inValue=false,braceDepth=0,quote=false;
+    while(i<n&&depth>0){
+      const c=text[i];
+      if(!inValue){
+        if(c==='}'){depth--;i++;break;}
+        if(c==='='){fieldName=buf.trim().toLowerCase();buf='';inValue=true;i++;continue;}
+        if(c===','){buf='';i++;continue;}
+        buf+=c;i++;continue;
+      }
+      if(c==='{'&&!quote){braceDepth++;buf+=c;i++;continue;}
+      if(c==='}'&&!quote){if(braceDepth===0){depth--;i++;inValue=false;if(fieldName)fields[fieldName]=cleanBibValue(buf);buf='';fieldName=null;continue;}braceDepth--;buf+=c;i++;continue;}
+      if(c==='"'&&braceDepth===0){quote=!quote;i++;continue;}
+      if(c===','&&braceDepth===0&&!quote){if(fieldName)fields[fieldName]=cleanBibValue(buf);buf='';fieldName=null;inValue=false;i++;continue;}
+      buf+=c;i++;
+    }
+    if(fieldName&&buf.trim())fields[fieldName]=cleanBibValue(buf);
+    entries.push({type,key,fields});
+  }
+  return entries;
+}
+function cleanBibValue(v){return String(v).replace(/[{}]/g,'').replace(/\\&/g,'&').replace(/\\%/g,'%').replace(/\\_/g,'_').replace(/\\\$/g,'$').replace(/---/g,'—').replace(/--/g,'–').replace(/~+/g,' ').replace(/\s+/g,' ').trim();}
+function splitBibAuthors(s){if(!s)return[];return s.split(/\s+and\s+/i).map(a=>a.trim()).filter(Boolean).map(a=>{if(a.includes(',')){const[last,first]=a.split(',').map(x=>x.trim());return(last+' '+first).trim();}return a;});}
+function bibToArticles(entries){
+  const out=[];const keyToId=new Map();
+  entries.forEach((e,idx)=>keyToId.set(e.key,e.key||('bib_'+(idx+1))));
+  entries.forEach((e,idx)=>{
+    const f=e.fields,id=e.key||('bib_'+(idx+1));
+    const citations=[];if(f.crossref&&keyToId.has(f.crossref))citations.push(keyToId.get(f.crossref));
+    out.push({id,title:f.title||'(без названия)',authors:splitBibAuthors(f.author||''),udc:f.udc||f.udk||'Без УДК',topics:f.keywords?f.keywords.split(/[,;]/).map(s=>s.trim()).filter(Boolean):[],year:f.year?parseInt(f.year,10):'—',abstract:f.abstract||'Аннотация отсутствует',citations});
+  });
+  return out;
+}
+
+let lastImportLog=null;
+function buildGraph(articles,opts={}){
+  const{merge=false,fromFilter=false,demo=false}=opts;
+  try{
+    const warnings=[],notes=[];
+    const log={broken:[],loops:[]};
+    const prevCount=sourceArticles.length;
+    const normalized=normalizeArticles(articles,warnings,log);
+    if(merge&&!fromFilter&&sourceArticles.length&&!isDemoData){
+      const existing=new Set(sourceArticles.map(a=>a.id));
+      const added=normalized.filter(a=>!existing.has(a.id));
+      const skipped=normalized.length-added.length;
+      if(!added.length){showToast('Не добавлено: все '+skipped+' статей уже есть','warn');return;}
+      sourceArticles=sourceArticles.concat(added);
+      if(skipped)notes.push('Добавлено '+added.length+', пропущено дубликатов: '+skipped);
+    }else{
+      if(!merge&&isDemoData&&!demo)notes.push('Демо-данные очищены, загружены ваши статьи');
+      if(!merge&&!fromFilter&&!demo&&!isDemoData&&prevCount>0)notes.push('Загружено статей: '+normalized.length+'. Предыдущий набор ('+prevCount+') заменён: импорт не объединяет файлы (см. мануал)');
+      sourceArticles=normalized;hiddenUdcs.clear();excludedAuthors.clear();
+      // v2.7.3: новый набор данных — сбрасываем фокус и диапазон лет, иначе старый слайдер молча скрывает статьи
+      seedNodeId=null;seedDepth=0;seedVisibleSet=new Set();
+      resetYearRange();
+      isDemoData=!!demo;
+    }
+    lastImportLog=log;
+    const msgs=notes.concat(warnings);
+    if(msgs.length)showToast(msgs.join(' · '),'warn',9000);
+    rebuildGraph(fromFilter);
+  }catch(err){showToast('Ошибка данных: '+err.message,'error');console.error(err);}
+}
+
+function visibleNodesForMetrics(){return graphData.nodes.filter(nodeShown);}
+function linksForMetrics(nodesArr){
+  const ids=new Set(nodesArr.map(n=>n.id));
+  return graphData.links.filter(l=>ids.has(l.source.id)&&ids.has(l.target.id)&&linkTypeForMetrics(l.type));
+}
+function typesLabelRu(){
+  const t=[metricTypes.cite?'цитирования':'',metricTypes.coauthor?'общий автор':'',metricTypes.topic?'общие темы':''].filter(Boolean);
+  return t.length?t.join(' + '):'ни одного';
+}
+function linkTypeForMetrics(type){
+  if(type==='cite')return metricTypes.cite;
+  if(type==='coauthor')return metricTypes.coauthor;
+  if(type==='topic')return metricTypes.topic;
+  return true;
+}
+
+// v2.7.4: построение связей по ВКЛЮЧЁННЫМ типам (types) — чистая функция, проверяется самопроверкой
+function buildLinks(arts,byId,types,thr){
+  const links=[],linkSet=new Set();
+  if(types.cite)arts.forEach(a=>a.citations.forEach(cid=>{
+    if(cid===a.id||!byId.has(cid))return;
+    const key='cite:'+a.id+'->'+cid;if(linkSet.has(key))return;
+    links.push({source:byId.get(a.id),target:byId.get(cid),type:'cite',value:3});linkSet.add(key);
+  }));
+  if(types.coauthor||types.topic)for(let i=0;i<arts.length;i++)for(let j=i+1;j<arts.length;j++){
+    const a=arts[i],b=arts[j],na=byId.get(a.id),nb=byId.get(b.id);
+    if(types.coauthor){const ca=a.authors.filter(x=>b.authors.includes(x));if(ca.length)links.push({source:na,target:nb,type:'coauthor',value:1+ca.length,authors:ca});}
+    if(types.topic){const ct=a.topics.filter(x=>b.topics.includes(x));if(ct.length>=thr)links.push({source:na,target:nb,type:'topic',value:ct.length*.5,topics:ct});}
+  }
+  return links;
+}
+function rebuildGraph(fromFilter=false){
+  // v2.7.4: фильтры УДК/авторов применяются ВСЕГДА (раньше смена порога тем сбрасывала их)
+  const filtered=sourceArticles.filter(a=>!hiddenUdcs.has(a.udc)&&!a.authors.some(x=>excludedAuthors.has(x)));
+  allArticles=filtered;
+  const prevPos=new Map();graphData.nodes.forEach(n=>prevPos.set(n.id,{x:n.x,y:n.y,vx:n.vx,vy:n.vy}));
+  const nodes=filtered.map((a,i)=>{
+    const prev=prevPos.get(a.id);
+    return {
+      ...a,name:a.title,val:8+a.citations.length*3,
+      x:prev?prev.x:Math.cos(i*2.399)*(45+Math.sqrt(i)*24),
+      y:prev?prev.y:Math.sin(i*2.399)*(45+Math.sqrt(i)*24),
+      vx:prev?prev.vx:0,vy:prev?prev.vy:0,
+      isIsolated:false
+    };
+  });
+  const byId=new Map(nodes.map(n=>[n.id,n]));
+  const links=buildLinks(filtered,byId,metricTypes,topicThreshold);
+  const touched=new Set();links.forEach(l=>{touched.add(l.source.id);touched.add(l.target.id);});
+  nodes.forEach(n=>{n.isIsolated=!touched.has(n.id);if(n.isIsolated&&!prevPos.has(n.id))n.y=0;});
+  udcColors={};[...new Set(sourceArticles.map(a=>a.udc))].forEach(u=>udcColors[u]=udcColor(u));
+  graphData={nodes,links};selectedNode=null;
+  if(seedNodeId&&!byId.has(seedNodeId)){seedNodeId=null;seedDepth=0;}
+  computeSeedVisible();
+  closeCard();
+
+  if(entityMode==='authors'){rebuildAuthorGraph();return;}
+
+  recomputeMetrics();
+  renderFilters();updateStats();renderTopList('degree');
+  setupCanvas();
+  if(!fromFilter){fitGraph();startSimulation();}
+  applyLayout();
+  drawGraph();
+  updateEmptyState();
+  if(!fromFilter&&!isDemoData)saveState();
+}
+
+function recomputeMetrics(){
+  let nodesForCalc, linksForCalc;
+  if(metricsMode==='visible'){
+    nodesForCalc=visibleNodesForMetrics();
+    linksForCalc=linksForMetrics(nodesForCalc);
+  }else{
+    nodesForCalc=graphData.nodes.slice();
+    linksForCalc=graphData.links.filter(l=>linkTypeForMetrics(l.type));
+  }
+  const m=computeCentrality(nodesForCalc,linksForCalc);
+  const pr=computePageRank(nodesForCalc,linksForCalc,useAllLinksForPR,metricTypes);
+  graphData.nodes.forEach(n=>{n.degree=undefined;n.betweenness=undefined;n.pagerank=undefined;n.pagerankInformative=undefined;});
+  nodesForCalc.forEach((node,i)=>{
+    node.degree=m.degree[i];
+    node.betweenness=m.betweenness[i];
+    node.pagerank=pr.pagerank[i];
+    node.pagerankInformative=pr.informative;
+  });
+  graphData._metricsNodeCount=nodesForCalc.length;
+  graphData._metricsLinkCount=linksForCalc.length;
+}
+
+function uniquePairs(links){
+  const set=new Set();
+  links.forEach(l=>{if(l.source.id===l.target.id)return;const a=l.source.id,b=l.target.id;const p=a<b?(a+'|'+b):(b+'|'+a);set.add(p);});
+  return set;
+}
+function computeCentrality(nodes,links){
+  const idx=new Map(nodes.map((n,i)=>[n.id,i]));const n=nodes.length;
+  const adjSets=Array.from({length:n},()=>new Set());
+  links.forEach(l=>{
+    const a=idx.get(l.source.id),b=idx.get(l.target.id);
+    if(a==null||b==null)return;
+    if(a===b)return;
+    adjSets[a].add(b);adjSets[b].add(a);
+  });
+  const adj=adjSets.map(s=>[...s]);
+  const degree=adjSets.map(s=>n>1?s.size/(n-1):0);
+  const between=new Array(n).fill(0);
+  for(let s=0;s<n;s++){
+    const S=[],P=Array.from({length:n},()=>[]);
+    const sigma=new Array(n).fill(0);sigma[s]=1;
+    const d=new Array(n).fill(-1);d[s]=0;
+    const Q=[s];
+    while(Q.length){const v=Q.shift();S.push(v);for(const w of adj[v]){if(d[w]<0){d[w]=d[v]+1;Q.push(w);}if(d[w]===d[v]+1){sigma[w]+=sigma[v];P[w].push(v);}}}
+    const delta=new Array(n).fill(0);
+    while(S.length){const w=S.pop();for(const v of P[w])delta[v]+=(sigma[v]/sigma[w])*(1+delta[w]);if(w!==s)between[w]+=delta[w];}
+  }
+  const norm=n>2?1/((n-1)*(n-2)):0;
+  const betweenness=between.map(b=>b*norm);
+  return {degree,betweenness,adjSets};
+}
+function computePageRank(nodes,links,useAll=false,mTypes){
+  const idx=new Map(nodes.map((n,i)=>[n.id,i]));const n=nodes.length;
+  const pr=new Array(n).fill(1/n);const out=Array.from({length:n},()=>[]);
+  const citeAllowed=!mTypes||mTypes.cite!==false;
+  links.forEach(l=>{
+    const a=idx.get(l.source.id),b=idx.get(l.target.id);if(a==null||b==null)return;
+    if(a===b)return;
+    if(l.type==='cite'&&citeAllowed){out[a].push(b);}
+    else if(useAll&&l.type!=='cite'){out[a].push(b);out[b].push(a);}
+  });
+  const hasEdges=out.some(o=>o.length>0);
+  if(!hasEdges)return{pagerank:pr,informative:false};
+  const damping=0.85;
+  for(let iter=0;iter<40;iter++){
+    const next=new Array(n).fill((1-damping)/n);
+    for(let i=0;i<n;i++){const outs=out[i];if(!outs.length){for(let j=0;j<n;j++)next[j]+=damping*pr[i]/n;}else{const share=damping*pr[i]/outs.length;for(const j of outs)next[j]+=share;}}
+    for(let i=0;i<n;i++)pr[i]=next[i];
+  }
+  return{pagerank:pr,informative:true};
+}
+function countComponents(nodes,links){
+  const idx=new Map(nodes.map((n,i)=>[n.id,i]));const n=nodes.length;if(!n)return 0;
+  const adj=Array.from({length:n},()=>[]);
+  links.forEach(l=>{const a=idx.get(l.source.id),b=idx.get(l.target.id);if(a!=null&&b!=null&&a!==b){adj[a].push(b);adj[b].push(a);}});
+  const seen=new Array(n).fill(false);let comps=0;
+  for(let i=0;i<n;i++){if(seen[i])continue;comps++;const st=[i];seen[i]=true;while(st.length){const v=st.pop();for(const w of adj[v])if(!seen[w]){seen[w]=true;st.push(w);}}}
+  return comps;
+}
+
+let authorGraphData={nodes:[],links:[]};
+function rebuildAuthorGraph(){
+  const byAuthor=new Map();
+  sourceArticles.forEach(a=>{
+    a.authors.forEach(au=>{
+      if(!byAuthor.has(au))byAuthor.set(au,{id:'au:'+au,name:au,articles:[],udcs:new Set(),years:[]});
+      const rec=byAuthor.get(au);rec.articles.push(a);rec.udcs.add(a.udc);
+      if(a.year!==undefined&&!isNaN(Number(a.year)))rec.years.push(Number(a.year));
+    });
+  });
+  const nodes=[...byAuthor.values()].map((r,i)=>({id:r.id,name:r.name,articleCount:r.articles.length,udcs:[...r.udcs],years:r.years,val:8+Math.sqrt(r.articles.length)*6,x:Math.cos(i*2.399)*(45+Math.sqrt(i)*24),y:Math.sin(i*2.399)*(45+Math.sqrt(i)*24),vx:0,vy:0}));
+  const byId=new Map(nodes.map(n=>[n.id,n]));
+  const pairCount=new Map();
+  sourceArticles.forEach(a=>{
+    const aus=a.authors.map(x=>'au:'+x);
+    for(let i=0;i<aus.length;i++)for(let j=i+1;j<aus.length;j++){
+      const k=aus[i]<aus[j]?(aus[i]+'|'+aus[j]):(aus[j]+'|'+aus[i]);
+      pairCount.set(k,(pairCount.get(k)||0)+1);
+    }
+  });
+  const links=[];pairCount.forEach((c,k)=>{const parts=k.split('|');links.push({source:byId.get(parts[0]),target:byId.get(parts[1]),type:'coauthor',value:c});});
+  authorGraphData={nodes,links};
+  const m=computeCentrality(nodes,links);
+  const pr=computePageRank(nodes,links,true,{cite:false,coauthor:true,topic:false});
+  nodes.forEach((n,i)=>{n.degree=m.degree[i];n.betweenness=m.betweenness[i];n.pagerank=pr.pagerank[i];n.pagerankInformative=pr.informative;});
+  graphData=authorGraphData;
+  renderFilters();updateStats();renderTopList('degree');
+  setupCanvas();fitGraph();startSimulation();applyLayout();drawGraph();updateEmptyState();
+}
+
+function setupCanvas(){
+  const container=document.getElementById('graph-container');
+  if(!canvas){canvas=document.createElement('canvas');canvas.setAttribute('aria-label','Интерактивный граф');container.appendChild(canvas);ctx=canvas.getContext('2d');initCanvasEvents();}
+  resizeCanvas();
+}
+function resizeCanvas(){if(!canvas)return;const r=canvas.getBoundingClientRect();width=Math.max(1,r.width);height=Math.max(1,r.height);dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);drawGraph();}
+function worldToScreen(x,y,w,h){return{x:(w||width)/2+panX+x*zoom,y:(h||height)/2+panY+y*zoom};}
+function screenToWorld(x,y){return{x:(x-width/2-panX)/zoom,y:(y-height/2-panY)/zoom};}
+function nodeRadius(n){return Math.max(3,Math.min(14,4+Math.sqrt(n.val)*1.35));}
+function linkVisible(l){return linkTypeForMetrics(l.type);}
+function nodeYearVisible(n){const y=Number(n.year);if(isNaN(y))return true;return y>=yearLo&&y<=yearHi;}
+// v2.7.3: ЕДИНОЕ правило видимости узла (шапка, метрики «видимый граф», отчёт, экспорт, рисунок):
+//  1) если включён фокус «Соседи» — узел обязан быть в окрестности;
+//  2) изолированные статьи (без связей) слайдер лет не скрывает;
+//  3) остальные — по диапазону лет.
+function nodeShownBy(n,lo,hi,seedActive,seedSet){
+  if(seedActive&&!seedSet.has(n.id))return false;
+  if(n.isIsolated)return true;
+  const y=Number(n.year);if(isNaN(y))return true;
+  return y>=lo&&y<=hi;
+}
+function nodeShown(n){return nodeShownBy(n,yearLo,yearHi,!!(seedNodeId&&seedDepth>0),seedVisibleSet);}
+let seedVisibleSet=new Set();
+function computeSeedVisible(){
+  seedVisibleSet=new Set();
+  if(!seedNodeId||seedDepth===0)return;
+  const byId=new Map(graphData.nodes.map(n=>[n.id,n]));
+  if(!byId.has(seedNodeId))return;
+  let frontier=new Set([seedNodeId]);seedVisibleSet.add(seedNodeId);
+  const adj=new Map();graphData.nodes.forEach(n=>adj.set(n.id,new Set()));
+  graphData.links.forEach(l=>{adj.get(l.source.id)?.add(l.target.id);adj.get(l.target.id)?.add(l.source.id);});
+  for(let d=0;d<seedDepth;d++){
+    const next=new Set();
+    frontier.forEach(id=>{adj.get(id)?.forEach(x=>{if(!seedVisibleSet.has(x)){seedVisibleSet.add(x);next.add(x);}});});
+    frontier=next;
+  }
+}
+function applyLayout(){
+  if(viewMode!=='timeline')return;
+  const ns=graphData.nodes.filter(n=>!n.isIsolated);
+  if(!ns.length)return;
+  const minY0=Math.min(...ns.map(m=>{const v=Number(m.year);return isNaN(v)?2000:v;}));
+  const maxY0=Math.max(...ns.map(m=>{const v=Number(m.year);return isNaN(v)?2000:v;}));
+  const spanY=Math.max(1,maxY0-minY0);
+  const vals=ns.map(m=>{
+    const v=timelineY==='degree'?m.degree:timelineY==='pagerank'?m.pagerank:m.betweenness;
+    return v||0;
+  });
+  const minV=Math.min(...vals,0), maxV=Math.max(...vals,0.0001);
+  const spanV=maxV-minV||1;
+  const yearBuckets=new Map();
+  ns.forEach(n=>{
+    const y=Number(n.year);const yv=isNaN(y)?2000:y;
+    if(!yearBuckets.has(yv))yearBuckets.set(yv,[]);
+    yearBuckets.get(yv).push(n);
+  });
+  yearBuckets.forEach((arr)=>{
+    arr.sort((a,b)=>a.id.localeCompare(b.id));
+    arr.forEach((n,idx)=>{
+      const jitter=(idx-(arr.length-1)/2)*14;
+      const yv=Number(n.year);const yearVal=isNaN(yv)?2000:yv;
+      n.x=(yearVal-minY0)/spanY*400-200;
+      const metric=timelineY==='degree'?n.degree:timelineY==='pagerank'?n.pagerank:n.betweenness;
+      const norm=((metric||0)-minV)/spanV;
+      n.y=200-norm*380+jitter;
+      n.vx=n.vy=0;
+    });
+  });
+  fitGraph();
+}
+
+function drawGraph(){
+  if(!ctx||!canvas)return;
+  // v2.7.4: если реальный размер холста изменился (адресная строка, поворот, возврат из фона), а событие не пришло —
+  // пересчитываем размер; иначе очищалась только часть холста и оставались «следы» от перемещения графа
+  const r=canvas.getBoundingClientRect();
+  if(r.width>0&&r.height>0&&(Math.abs(r.width-width)>1||Math.abs(r.height-height)>1)){resizeCanvas();return;}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.restore();
+  drawGraphTo(ctx,width,height,'dark');
+}
+function drawGraphTo(g,w,h,theme='dark',ex){
+  const isLight=theme==='light';
+  const k=ex?ex.k:1;   // ex — режим экспорта PNG: масштаб k, подписи всегда, легенда
+  g.fillStyle=isLight?'#ffffff':'#0a0e1a';g.fillRect(0,0,w,h);
+  const q=searchQuery;const w2s=(x,y)=>worldToScreen(x,y,w,h);
+  const showSeed=seedNodeId&&seedDepth>0;if(showSeed)computeSeedVisible();
+  // изолированные показываются всегда, без фильтра по году
+  const isolated=graphData.nodes.filter(n=>n.isIsolated&&(!showSeed||seedVisibleSet.has(n.id)));
+  const labelsOn=document.getElementById('showLabels').checked;
+  const cands=[];let shownCount=0;
+
+  graphData.links.forEach(l=>{
+    if(!linkVisible(l))return;
+    if(!nodeYearVisible(l.source)||!nodeYearVisible(l.target))return;
+    if(l.source.isIsolated||l.target.isIsolated)return;
+    if(showSeed&&(!seedVisibleSet.has(l.source.id)||!seedVisibleSet.has(l.target.id)))return;
+    const a=w2s(l.source.x,l.source.y),b=w2s(l.target.x,l.target.y);
+    if(l.type==='cite')g.strokeStyle=isLight?'rgba(109,40,217,.75)':'rgba(124,58,237,.72)';
+    else if(l.type==='coauthor')g.strokeStyle=isLight?'rgba(5,120,87,.7)':'rgba(5,150,105,.65)';
+    else g.strokeStyle=isLight?'rgba(180,83,9,.55)':'rgba(217,119,6,.48)';
+    g.lineWidth=Math.max(1,Math.min(3,l.value*.65))*k;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();
+    if(l.type==='cite'){const ang=Math.atan2(b.y-a.y,b.x-a.x),len=8*k;g.fillStyle=isLight?'rgba(109,40,217,.9)':'rgba(167,139,250,.9)';g.beginPath();g.moveTo(b.x,b.y);g.lineTo(b.x-len*Math.cos(ang-.45),b.y-len*Math.sin(ang-.45));g.lineTo(b.x-len*Math.cos(ang+.45),b.y-len*Math.sin(ang+.45));g.closePath();g.fill();}
+  });
+
+  graphData.nodes.forEach(n=>{
+    if(n.isIsolated)return;
+    if(!nodeYearVisible(n))return;
+    if(showSeed&&!seedVisibleSet.has(n.id))return;
+    shownCount++;
+    const p=w2s(n.x,n.y),r=nodeRadius(n)*(ex?1:Math.min(1.25,Math.max(.9,zoom)))*k;
+    const match=!q||n.name.toLowerCase().includes(q)||(n.authors||[]).some(a=>a.toLowerCase().includes(q))||(n.udc||'').toLowerCase().includes(q)||(n.topics||[]).some(t=>t.toLowerCase().includes(q));
+    g.globalAlpha=match?1:.18;
+    g.fillStyle=entityMode==='authors'?'#6ea8ff':(udcColors[n.udc]||'#888');
+    g.beginPath();g.arc(p.x,p.y,r,0,Math.PI*2);g.fill();
+    if(selectedNode===n&&theme==='dark'&&!ex){g.strokeStyle='#fff';g.lineWidth=2;g.stroke();}
+    if(ex){if(labelsOn)cands.push({n:n,p:p,r:r,match:match});}
+    else if(labelsOn&&zoom>.48){
+      g.font=Math.max(9,Math.min(12,10*zoom))+'px Segoe UI, sans-serif';g.textAlign='center';
+      g.fillStyle=match?(isLight?'#1a2340':'#e0e6f0'):'#657084';
+      const label=n.name.length>32?n.name.slice(0,31)+'…':n.name;
+      g.fillText(label,p.x,p.y+r+12);
+    }
+    g.globalAlpha=1;
+  });
+
+  // подписи в экспорте: все, что помещаются; самые связные — первыми; перекрывающиеся пропускаются
+  if(ex&&labelsOn){
+    cands.sort((a,b)=>(b.n.degree||0)-(a.n.degree||0));
+    const fpx=Math.round(ex.font*k);
+    g.font=fpx+'px "Segoe UI", Arial, sans-serif';g.textAlign='center';g.textBaseline='alphabetic';g.lineJoin='round';
+    const placed=[];let drawn=0;
+    cands.forEach(c=>{
+      const label=c.n.name.length>40?c.n.name.slice(0,39)+'…':c.n.name;
+      const tw=g.measureText(label).width,th=fpx;
+      const tries=[c.p.y+c.r+2*k,c.p.y-c.r-2*k-th-3*k];   // под узлом, затем над узлом
+      for(let t=0;t<tries.length;t++){
+        const rect={x:c.p.x-tw/2-2*k,y:tries[t],w:tw+4*k,h:th+3*k};
+        if(rect.x<0||rect.x+rect.w>w||rect.y<0||rect.y+rect.h>h)continue;
+        let hit=false;
+        for(let i=0;i<placed.length;i++){const o=placed[i];if(rect.x<o.x+o.w&&rect.x+rect.w>o.x&&rect.y<o.y+o.h&&rect.y+rect.h>o.y){hit=true;break;}}
+        if(hit)continue;
+        placed.push(rect);drawn++;
+        g.globalAlpha=c.match?1:.3;
+        g.lineWidth=3*k;g.strokeStyle=isLight?'#ffffff':'#0a0e1a';g.strokeText(label,c.p.x,rect.y+th);
+        g.fillStyle=isLight?'#1a2340':'#e0e6f0';g.fillText(label,c.p.x,rect.y+th);
+        g.globalAlpha=1;
+        break;
+      }
+    });
+    ex.stats={shown:drawn,total:cands.length};
+  }
+
+  if(isolated.length){
+    const lineY=h-ISO_STRIP_LINE_OFFSET*k;
+    const nodeY=h-ISO_STRIP_NODE_OFFSET*k;
+    g.strokeStyle=isLight?'rgba(120,120,120,.4)':'rgba(150,150,150,.35)';
+    g.setLineDash([6*k,6*k]);g.lineWidth=k;
+    g.beginPath();g.moveTo(0,lineY);g.lineTo(w,lineY);g.stroke();
+    g.setLineDash([]);
+    g.fillStyle=isLight?'#666':'#999';
+    g.font=Math.round(12*k)+'px Segoe UI, sans-serif';g.textAlign='left';
+    g.fillText('Изолированные статьи ('+isolated.length+') — нет связей с другими',10*k,lineY-8*k);
+    const r=Math.max(6,Math.min(14,8))*(ex?1:Math.min(1.2,Math.max(.9,zoom)))*k;
+    const spacing=ex?Math.min(90*k,Math.max(36*k,(w-40*k)/Math.max(1,isolated.length))):Math.min(60,Math.max(30,(w-40)/Math.max(1,isolated.length)));
+    const startX=20*k+spacing/2;
+    let cut=0;
+    isolated.forEach((n,idx)=>{
+      const sx=startX+idx*spacing;
+      if(sx>w-20*k){cut++;return;}
+      g.fillStyle=isLight?'#222':(udcColors[n.udc]||'#888');
+      g.beginPath();g.arc(sx,nodeY,r,0,Math.PI*2);g.fill();
+      if(selectedNode===n&&!ex){g.strokeStyle='#fff';g.lineWidth=2;g.stroke();}
+      if(labelsOn){
+        g.font=Math.round((ex?8:9)*k)+'px Segoe UI, sans-serif';g.textAlign='center';
+        g.fillStyle=isLight?'#333':'#b0b8c8';
+        const lim=ex?16:18;
+        const label=n.name.length>lim?n.name.slice(0,lim-1)+'…':n.name;
+        g.fillText(label,sx,nodeY+r+10*k);
+      }
+    });
+    if(ex&&cut>0){g.textAlign='right';g.fillStyle=isLight?'#666':'#999';g.font=Math.round(10*k)+'px Segoe UI, sans-serif';g.fillText('…и ещё '+cut,w-12*k,lineY-8*k);}
+  }
+  if(ex&&ex.legend)drawExportLegend(g,w,h,theme,k,shownCount+isolated.length);
+}
+function drawExportLegend(g,w,h,theme,k,count){
+  const isLight=theme==='light';
+  const tx=isLight?'#1a2340':'#e0e6f0',tm=isLight?'#555':'#9aa5b4';
+  const x0=16*k;let y=24*k;
+  g.textAlign='left';g.textBaseline='alphabetic';g.globalAlpha=1;
+  g.font='bold '+Math.round(14*k)+'px "Segoe UI", Arial, sans-serif';g.fillStyle=tx;
+  const what=entityMode==='authors'?'авторов':'статей';
+  g.fillText('Academic Graph Analyzer · '+what+' в графе: '+count+' · связей (пар): '+document.getElementById('stat-links').textContent,x0,y);
+  y+=22*k;
+  g.font=Math.round(11*k)+'px "Segoe UI", Arial, sans-serif';
+  let x=x0;
+  const types=[];
+  if(metricTypes.cite)types.push(['цитирование (стрелка)',isLight?'rgba(109,40,217,.9)':'rgba(167,139,250,.95)']);
+  if(metricTypes.coauthor)types.push(['общий автор',isLight?'rgba(5,120,87,.9)':'rgba(5,150,105,.95)']);
+  if(metricTypes.topic)types.push(['общие темы',isLight?'rgba(180,83,9,.9)':'rgba(217,119,6,.95)']);
+  g.fillStyle=tm;g.fillText('Связи:',x,y);x+=g.measureText('Связи:').width+10*k;
+  types.forEach(t=>{
+    g.strokeStyle=t[1];g.lineWidth=3*k;g.beginPath();g.moveTo(x,y-4*k);g.lineTo(x+22*k,y-4*k);g.stroke();x+=28*k;
+    g.fillStyle=tx;g.fillText(t[0],x,y);x+=g.measureText(t[0]).width+16*k;
+  });
+  if(!types.length){g.fillStyle=tx;g.fillText('нет включённых типов',x,y);}
+  if(entityMode!=='authors'){
+    y+=20*k;x=x0;
+    g.fillStyle=tm;g.fillText('УДК:',x,y);x+=g.measureText('УДК:').width+10*k;
+    const used=[];graphData.nodes.forEach(n=>{if(used.indexOf(n.udc)<0)used.push(n.udc);});
+    for(let i=0;i<used.length;i++){
+      const label=String(used[i]);const tw=g.measureText(label).width;
+      if(x+tw+30*k>w-16*k){g.fillStyle=tm;g.fillText('…',x,y);break;}
+      g.fillStyle=udcColors[used[i]]||'#888';g.beginPath();g.arc(x+5*k,y-4*k,5*k,0,Math.PI*2);g.fill();
+      x+=14*k;g.fillStyle=tx;g.fillText(label,x,y);x+=tw+14*k;
+    }
+  }
+}
+function startSimulation(){
+  if(animationId)cancelAnimationFrame(animationId);simulationTicks=0;
+  if(viewMode==='timeline'){drawGraph();return;}
+  const tick=()=>{
+    let energy=0;const ns=graphData.nodes,ls=graphData.links;
+    if(simulationTicks<260){
+      for(let i=0;i<ns.length;i++){
+        const a=ns[i];
+        if(a.isIsolated)continue;
+        let fx=-a.x*.002,fy=-a.y*.002;
+        for(let j=i+1;j<ns.length;j++){
+          const b=ns[j];if(b.isIsolated)continue;
+          let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy+1,f=900/d2;
+          fx+=dx*f;fy+=dy*f;
+          b.vx-=dx*f*.012;b.vy-=dy*f*.012;
+        }
+        a.vx+=fx*.012;a.vy+=fy*.012;
+      }
+      ls.forEach(l=>{
+        if(l.source.isIsolated||l.target.isIsolated)return;
+        const a=l.source,b=l.target,dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1,target=l.type==='cite'?105:l.type==='coauthor'?135:165,f=(d-target)*.002;
+        a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f;
+      });
+      ns.forEach(n=>{
+        if(n.isIsolated)return;
+        n.vx*=.86;n.vy*=.86;
+        n.x+=n.vx;n.y+=n.vy;
+        if(n.x>WORLD_R)n.x=WORLD_R;if(n.x<-WORLD_R)n.x=-WORLD_R;
+        if(n.y>WORLD_Y_MAX)n.y=WORLD_Y_MAX;if(n.y<-WORLD_R)n.y=-WORLD_R;
+        energy+=Math.abs(n.vx)+Math.abs(n.vy);
+      });
+      simulationTicks++;drawGraph();
+    }else{animationId=0;return;}
+    if(energy>.15)animationId=requestAnimationFrame(tick);else{animationId=0;if(!isDemoData)saveState();}
+  };
+  animationId=requestAnimationFrame(tick);
+}
+function fitGraph(){
+  const ns=graphData.nodes.filter(n=>!n.isIsolated);if(!ns.length)return;
+  const minX=Math.min(...ns.map(n=>n.x)),maxX=Math.max(...ns.map(n=>n.x)),minY=Math.min(...ns.map(n=>n.y)),maxY=Math.max(...ns.map(n=>n.y));
+  const spanX=Math.max(100,maxX-minX),spanY=Math.max(100,maxY-minY);
+  zoom=Math.min(width/(spanX+100),height/(spanY+100),1.5);panX=-(minX+maxX)/2*zoom;panY=-(minY+maxY)/2*zoom;drawGraph();
+}
+
+function hitNode(x,y){const p=screenToWorld(x,y);for(let i=graphData.nodes.length-1;i>=0;i--){const n=graphData.nodes[i];if(!n.isIsolated&&!nodeYearVisible(n))continue;if(seedNodeId&&seedDepth>0&&!seedVisibleSet.has(n.id))continue;const r=nodeRadius(n)+8;if((n.x-p.x)**2+(n.y-p.y)**2<r*r)return n;}return null;}
+function pointerDown(e){
+  canvas.setPointerCapture(e.pointerId);
+  pointerMap.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pointerMap.size===2){dragNode=null;panStart=null;const pts=[...pointerMap.values()];const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);pinchStart={dist,zoom};return;}
+  const node=hitNode(e.offsetX,e.offsetY);
+  if(node){dragNode=node;selectedNode=node;showArticleCard(node);drawGraph();}
+  else{panStart={x:e.offsetX,y:e.offsetY,px:panX,py:panY};}
+}
+let rafPending=false;
+function pointerMove(e){
+  if(!pointerMap.has(e.pointerId))return;
+  pointerMap.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pointerMap.size===2&&pinchStart){
+    const pts=[...pointerMap.values()];const cx=(pts[0].x+pts[1].x)/2,cy=(pts[0].y+pts[1].y)/2;
+    const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    const factor=dist/pinchStart.dist;const before=screenToWorld(cx,cy);
+    zoom=Math.max(.15,Math.min(4,pinchStart.zoom*factor));
+    const after=worldToScreen(before.x,before.y);panX+=cx-after.x;panY+=cy-after.y;scheduleDraw();return;
+  }
+  if(dragNode){const p=screenToWorld(e.offsetX,e.offsetY);dragNode.x=p.x;dragNode.y=p.y;dragNode.vx=dragNode.vy=0;scheduleDraw();}
+  else if(panStart){panX=panStart.px+(e.offsetX-panStart.x);panY=panStart.py+(e.offsetY-panStart.y);scheduleDraw();}
+}
+function scheduleDraw(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;drawGraph();});}
+function pointerUp(e){pointerMap.delete(e.pointerId);if(!pointerMap.size){dragNode=null;panStart=null;pinchStart=null;if(!isDemoData)saveState();}else{panStart=null;dragNode=null;pinchStart=null;}}
+function initCanvasEvents(){
+  canvas.addEventListener('pointerdown',pointerDown);
+  canvas.addEventListener('pointermove',pointerMove);
+  canvas.addEventListener('pointerup',pointerUp);
+  canvas.addEventListener('pointercancel',pointerUp);
+  canvas.addEventListener('dblclick',fitGraph);
+  canvas.addEventListener('wheel',e=>{e.preventDefault();const before=screenToWorld(e.offsetX,e.offsetY);zoom=Math.max(.15,Math.min(4,zoom*(e.deltaY<0?1.12:.89)));const after=worldToScreen(before.x,before.y);panX+=e.offsetX-after.x;panY+=e.offsetY-after.y;scheduleDraw();},{passive:false});
+}
+
+function metricHint(metric,val,n,informative){
+  if(val===undefined)return{color:'#6b7588',text:'не входит в видимый граф'};
+  if(metric==='degree'){if(val===0)return{color:'#6b7588',text:'изолирована'};if(val<0.1)return{color:'#f59e0b',text:'периферия'};if(val<0.3)return{color:'#10b981',text:'активный участник'};return{color:'#10b981',text:'хаб'};}
+  if(metric==='betweenness'){if(val<0.01)return{color:'#6b7588',text:'не участвует в путях'};if(val<0.05)return{color:'#f59e0b',text:'слабый посредник'};if(val<0.2)return{color:'#10b981',text:'заметный посредник'};return{color:'#10b981',text:'много путей через неё'};}
+  if(metric==='pagerank'){if(!informative)return{color:'#6b7588',text:'цитат нет — неинформативно'};const avg=1/Math.max(1,n);const ratio=val/avg;if(ratio<1.2)return{color:'#6b7588',text:'ниже среднего'};if(ratio<2.5)return{color:'#10b981',text:'выше среднего'};return{color:'#10b981',text:'авторитет'};}
+  return{color:'#6b7588',text:''};
+}
+function showArticleCard(node){
+  selectedNode=node;
+  if(entityMode==='authors'){
+    document.getElementById('cardTitle').textContent='Автор: '+node.name;
+    document.getElementById('cardAuthors').textContent=node.articleCount+' статей';
+    document.getElementById('cardYear').textContent=node.years.length?Math.min(...node.years)+'–'+Math.max(...node.years):'—';
+    document.getElementById('cardUdc').textContent=node.udcs.join(', ')||'—';
+    document.getElementById('cardTopics').innerHTML='';
+    document.getElementById('cardAbstract').textContent='Узел автора. Связи — совместные публикации.';
+    const n=graphData.nodes.length;
+    const dh=metricHint('degree',node.degree,n,true);
+    const bh=metricHint('betweenness',node.betweenness,n,true);
+    document.getElementById('cardMetrics').innerHTML=
+      '<div class="metrics">'+
+        '<div class="metric"><span class="dot" style="background:'+dh.color+'"></span><span>Degree</span><span class="tr">степень</span><b>'+(node.degree!==undefined?node.degree.toFixed(3):'—')+'</b><span class="hint">'+dh.text+'</span></div>'+
+        '<div class="metric"><span class="dot" style="background:'+bh.color+'"></span><span>Betweenness</span><span class="tr">посредничество</span><b>'+(node.betweenness!==undefined?node.betweenness.toFixed(3):'—')+'</b><span class="hint">'+bh.text+'</span></div>'+
+      '</div>';
+    const el=document.getElementById('cardConnections');el.innerHTML='';
+    const related=graphData.links.filter(l=>l.source===node||l.target===node);
+    related.forEach(l=>{
+      const other=l.source===node?l.target:l.source;
+      const div=document.createElement('div');div.className='conn-item';
+      div.innerHTML='<span class="type type-coauthor">Совместно</span>'+escapeHtml(other.name)+'<div style="font-size:10px;color:#8a95a8;margin-top:3px">'+l.value+' совместных публикаций</div>';
+      div.addEventListener('click',()=>focusNode(other.id));el.appendChild(div);
+    });
+    document.getElementById('articleCard').classList.add('active');drawGraph();return;
+  }
+  document.getElementById('cardTitle').textContent=node.name;
+  document.getElementById('cardAuthors').textContent=node.authors.join(', ')||'Не указаны';
+  document.getElementById('cardYear').textContent=node.year;
+  document.getElementById('cardUdc').textContent=node.udc;
+  document.getElementById('cardTopics').innerHTML=node.topics.map(t=>'<span class="tag">'+escapeHtml(t)+'</span>').join('');
+  document.getElementById('cardAbstract').textContent=node.abstract;
+  const nForHint=graphData._metricsNodeCount||graphData.nodes.length;
+  const dh=metricHint('degree',node.degree,nForHint,true);
+  const bh=metricHint('betweenness',node.betweenness,nForHint,true);
+  const ph=metricHint('pagerank',node.pagerank,nForHint,node.pagerankInformative);
+  const modeLabel=metricsMode==='full'?'полный граф':'видимый граф';
+  const typesLabel=typesLabelRu();
+  document.getElementById('cardMetrics').innerHTML=
+    '<div class="metrics">'+
+      '<div class="metric"><span class="dot" style="background:'+dh.color+'"></span><span>Degree</span><span class="tr">степень</span><b>'+(node.degree!==undefined?node.degree.toFixed(3):'—')+'</b><span class="hint">'+dh.text+'</span></div>'+
+      '<div class="metric"><span class="dot" style="background:'+bh.color+'"></span><span>Betweenness</span><span class="tr">посредничество</span><b>'+(node.betweenness!==undefined?node.betweenness.toFixed(3):'—')+'</b><span class="hint">'+bh.text+'</span></div>'+
+      '<div class="metric"><span class="dot" style="background:'+ph.color+'"></span><span>'+(useAllLinksForPR?'Centrality*':'PageRank')+'</span><span class="tr">'+(useAllLinksForPR?'центральность':'авторитетность')+'</span><b>'+(node.pagerank!==undefined?node.pagerank.toFixed(4):'—')+'</b><span class="hint">'+ph.text+'</span></div>'+
+    '</div>'+
+    '<div class="metrics-context">Режим метрик: '+modeLabel+' · Учтены связи: '+typesLabel+(useAllLinksForPR?' · PageRank* = центральность по всем связям':'')+'</div>';
+  const el=document.getElementById('cardConnections');el.innerHTML='';
+  const related=graphData.links.filter(l=>l.source===node||l.target===node);
+  related.forEach(l=>{
+    const other=l.source===node?l.target:l.source;if(!nodeYearVisible(other)&&!other.isIsolated)return;
+    const type=l.type==='cite'?'Цитирование':l.type==='coauthor'?'Общий автор':'Общие темы';
+    const extra=l.authors?('Общие авторы: '+l.authors.join(', ')):l.topics?('Темы: '+l.topics.join(', ')):'';
+    const div=document.createElement('div');div.className='conn-item';
+    div.innerHTML='<span class="type '+(l.type==='cite'?'type-cite':l.type==='coauthor'?'type-coauthor':'type-topic')+'">'+type+'</span>'+escapeHtml(other.name)+(extra?'<div style="font-size:10px;color:#8a95a8;margin-top:3px">'+escapeHtml(extra)+'</div>':'');
+    div.addEventListener('click',()=>focusNode(other.id));el.appendChild(div);
+  });
+  document.getElementById('articleCard').classList.add('active');drawGraph();
+}
+function focusNode(id){const n=graphData.nodes.find(x=>x.id===id);if(!n)return;selectedNode=n;panX=-n.x*zoom;panY=-n.y*zoom;showArticleCard(n);}
+function closeCard(){document.getElementById('articleCard').classList.remove('active');selectedNode=null;drawGraph();}
+
+function refreshAfterVisibilityChange(){
+  if(metricsMode==='visible')recomputeMetrics();
+  updateStats();renderTopList(currentTopMetric);drawGraph();
+  if(selectedNode)showArticleCard(selectedNode);
+}
+function focusNeighbors(depth){
+  if(!selectedNode)return;
+  seedNodeId=selectedNode.id;seedDepth=depth;computeSeedVisible();refreshAfterVisibilityChange();showToast('Фокус на соседях: '+depth+' шаг(а)');
+}
+function resetSeed(){seedNodeId=null;seedDepth=0;seedVisibleSet=new Set();refreshAfterVisibilityChange();showToast('Показан весь граф');}
+
+function renderFilters(){
+  const udcCounts={},authorCounts={};
+  sourceArticles.forEach(a=>{udcCounts[a.udc]=(udcCounts[a.udc]||0)+1;a.authors.forEach(x=>authorCounts[x]=(authorCounts[x]||0)+1);});
+  const udcEl=document.getElementById('udcFilters');udcEl.innerHTML='';
+  Object.entries(udcCounts).forEach(entry=>{
+    const u=entry[0],c=entry[1];
+    const div=document.createElement('div');div.className='filter-item';
+    div.innerHTML='<div class="dot" style="background:'+(udcColors[u]||'#888')+'"></div><span class="label">УДК '+escapeHtml(u)+'</span><span class="count">'+(hiddenUdcs.has(u)?'скрыто':c)+'</span>';
+    div.addEventListener('click',()=>toggleUdc(u));udcEl.appendChild(div);
+  });
+  const authorEl=document.getElementById('authorFilters');authorEl.innerHTML='';
+  Object.entries(authorCounts).sort((a,b)=>b[1]-a[1]).forEach(entry=>{
+    const a=entry[0],c=entry[1];
+    const div=document.createElement('div');div.className='filter-item';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=!excludedAuthors.has(a);
+    cb.addEventListener('change',()=>filterByAuthor(a,cb.checked));
+    const span=document.createElement('span');span.className='label';span.textContent=a;
+    const cnt=document.createElement('span');cnt.className='count';cnt.textContent=c;
+    div.appendChild(cb);div.appendChild(span);div.appendChild(cnt);authorEl.appendChild(div);
+  });
+}
+function toggleUdc(u){hiddenUdcs.has(u)?hiddenUdcs.delete(u):hiddenUdcs.add(u);rebuildGraph(true);if(!isDemoData)saveState();}
+function filterByAuthor(a,include){include?excludedAuthors.delete(a):excludedAuthors.add(a);rebuildGraph(true);if(!isDemoData)saveState();}
+
+function visibleNodes(){return graphData.nodes.filter(nodeShown);}
+function densityInfo(d,n){
+  if(d===0)return{color:'#6b7588',text:'нет связей'};
+  if(n<10)return{color:'#f59e0b',text:'малая выборка'};
+  if(d<0.05)return{color:'#f59e0b',text:'разреженный'};
+  if(d<0.20)return{color:'#10b981',text:'типично'};
+  if(d<0.40)return{color:'#10b981',text:'плотный'};
+  return{color:'#f97316',text:'очень плотный'};
+}
+function updateStats(){
+  const vis=visibleNodes();const n=vis.length;
+  const visIds=new Set(vis.map(v=>v.id));
+  const visibleLinks=graphData.links.filter(l=>visIds.has(l.source.id)&&visIds.has(l.target.id)&&linkTypeForMetrics(l.type));
+  const pairs=uniquePairs(visibleLinks);
+  const l=pairs.size;
+  document.getElementById('stat-nodes').textContent=graphData.nodes.length===n?n:(n+' / '+graphData.nodes.length);
+  document.getElementById('stat-links').textContent=l;
+  document.getElementById('stat-clusters').textContent=countComponents(vis,visibleLinks);
+  const d=n>1?l/(n*(n-1)/2):0;
+  document.getElementById('stat-density').textContent=d.toFixed(3);
+  const info=densityInfo(d,n);
+  document.getElementById('densityDot').style.background=info.color;
+  document.getElementById('densityItem').title='Плотность '+d.toFixed(3)+' — '+info.text+'. Уникальных связанных пар: '+l+' из максимум '+(n*(n-1)/2)+' при '+n+' видимых статьях.';
+  const badge=document.getElementById('metricsModeBadge');
+  if(metricsMode==='full'){badge.textContent='Метрики: полный граф (без фильтров УДК/авторов)';badge.classList.remove('visible');}
+  else{badge.textContent='Метрики: видимый граф';badge.classList.add('visible');}
+}
+function toggleMetricsMode(){
+  metricsMode=metricsMode==='full'?'visible':'full';
+  recomputeMetrics();updateStats();renderTopList(currentTopMetric);drawGraph();
+  if(selectedNode)showArticleCard(selectedNode);
+  if(!isDemoData)saveState();
+  showToast('Метрики: '+(metricsMode==='full'?'полный граф (без фильтров УДК/авторов)':'видимый граф'));
+}
+
+let currentTopMetric='degree';
+function showTop(metric){
+  currentTopMetric=metric;
+  document.querySelectorAll('[data-top]').forEach(b=>b.classList.remove('btn-primary'));
+  const btn=document.querySelector('[data-top="'+metric+'"]');if(btn)btn.classList.add('btn-primary');
+  renderTopList(metric);
+}
+function renderTopList(metric){
+  const el=document.getElementById('topList');
+  const withVals=graphData.nodes.filter(n=>n[metric]!==undefined);
+  if(!withVals.length){el.innerHTML='<div style="font-size:11px;color:#6b7588;padding:6px;">Нет данных</div>';return;}
+  const sorted=withVals.slice().sort((a,b)=>(b[metric]??0)-(a[metric]??0)).slice(0,10);
+  el.innerHTML='';
+  sorted.forEach((n,i)=>{
+    const div=document.createElement('div');div.className='top-item';
+    const val=metric==='pagerank'?(n[metric]??0).toFixed(4):(n[metric]??0).toFixed(3);
+    div.innerHTML='<span class="rank">'+(i+1)+'</span><span class="name">'+escapeHtml(n.name)+'</span><span class="val">'+val+'</span>';
+    div.addEventListener('click',()=>focusNode(n.id));el.appendChild(div);
+  });
+}
+
+function setView(mode){viewMode=mode;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('btn-primary',b.dataset.view===mode));document.getElementById('timelineControls').style.display=mode==='timeline'?'block':'none';applyLayout();startSimulation();if(!isDemoData)saveState();}
+function setEntity(mode){entityMode=mode;document.querySelectorAll('[data-entity]').forEach(b=>b.classList.toggle('btn-primary',b.dataset.entity===mode));if(mode==='authors')rebuildAuthorGraph();else rebuildGraph(false);if(!isDemoData)saveState();}
+document.getElementById('timelineY')?.addEventListener('change',e=>{timelineY=e.target.value;applyLayout();});
+
+function processFile(file){
+  if(!file)return;
+  const name=(file.name||'').toLowerCase();
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    try{
+      if(name.endsWith('.bib')||name.endsWith('.bibtex')||/^\s*@/m.test(text)&&!/^\s*\{/.test(text)){
+        const entries=parseBibTeX(text);
+        if(!entries.length)throw new Error('BibTeX: не найдено записей');
+        if(isDemoData){sourceArticles=[];graphData={nodes:[],links:[]};isDemoData=false;}
+        buildGraph(bibToArticles(entries),{merge:false});
+        showToast('BibTeX: '+entries.length+' записей (цитаты не извлекаются)');
+      }else{
+        const data=JSON.parse(text);
+        if(!data||!Array.isArray(data.articles))throw new Error('В JSON ожидается articles[]');
+        if(isDemoData){sourceArticles=[];graphData={nodes:[],links:[]};isDemoData=false;}
+        buildGraph(data.articles,{merge:false});
+      }
+    }catch(err){showToast('Ошибка импорта: '+err.message,'error');console.error(err);}
+  };
+  reader.onerror=()=>showToast('Не удалось прочитать файл','error');
+  reader.readAsText(file,'utf-8');
+}
+function loadSampleData(){isDemoData=true;sourceArticles=[];graphData={nodes:[],links:[]};buildGraph(sampleData.articles,{merge:false,demo:true});}
+function clearGraph(){
+  if(!confirm('Очистить граф?'))return;
+  sourceArticles=[];graphData={nodes:[],links:[]};authorGraphData={nodes:[],links:[]};hiddenUdcs.clear();excludedAuthors.clear();
+  seedNodeId=null;seedDepth=0;seedVisibleSet=new Set();isDemoData=false;lastImportLog=null;resetYearRange();
+  selectedNode=null;closeCard();renderFilters();updateStats();renderTopList('degree');drawGraph();updateEmptyState();
+  try{localStorage.removeItem(STORAGE_KEY);LEGACY_KEYS.forEach(k=>localStorage.removeItem(k));}catch(e){}
+  showToast('Граф очищен');
+}
+function updateEmptyState(){document.getElementById('emptyState').style.display=graphData.nodes.length?'none':'flex';}
+function exportGraph(){
+  const data={articles:sourceArticles.map(a=>({id:a.id,title:a.title,authors:a.authors,udc:a.udc,topics:a.topics,year:a.year,abstract:a.abstract,citations:a.citations})),metadata:{generated:new Date().toISOString(),totalArticles:sourceArticles.length,version:'2.7.4'}};
+  downloadBlob(JSON.stringify(data,null,2),'academic_graph_data.json','application/json');
+}
+function exportVisibleGraph(){
+  const vis=visibleNodes();const visIds=new Set(vis.map(v=>v.id));
+  const visibleArticles=sourceArticles.filter(a=>visIds.has(a.id)).map(a=>({...a,citations:a.citations.filter(c=>visIds.has(c))}));
+  const data={articles:visibleArticles,metadata:{generated:new Date().toISOString(),totalArticles:visibleArticles.length,filtered:true,version:'2.7.4'}};
+  downloadBlob(JSON.stringify(data,null,2),'academic_graph_visible.json','application/json');
+  showToast('Экспортировано '+visibleArticles.length+' видимых статей');
+}
+function downloadJsonTemplate(){
+  const template={_instructions:{description:'Шаблон импорта. Удалите примеры и внесите свои данные. Авторы — «Фамилия И. И.» (с пробелом между инициалами).',required_fields:['id','title'],fields:{id:'Уникальный id (bibtex-key)',title:'Название (обязательно)',authors:'Массив авторов в формате «Фамилия И. И.»',udc:'УДК или пустая строка',topics:'Массив ключевых слов',year:'Год',abstract:'Аннотация',citations:'Массив id цитируемых статей'},note:'BibTeX (.bib) тоже поддерживается — цитаты из него не извлекаются. Авторы нормализуются: «И.И.» → «И. И.», «Иванов ИИ» → «Иванов И. И.».'},articles:[{id:'article_001',title:'Пример: название первой публикации',authors:['Иванов И. И.','Петрова А. С.'],udc:'616.89',topics:['пример темы'],year:2024,abstract:'Замените текст.',citations:['article_002']},{id:'article_002',title:'Пример: название второй публикации',authors:['Смирнов В. П.'],udc:'159.9',topics:['пример темы'],year:2022,abstract:'Замените текст.',citations:[]}]};
+  downloadBlob(JSON.stringify(template,null,2),'academic_graph_template.json','application/json');
+}
+function exportPNG(opts={}){
+  const whiteBg=!!opts.whiteBg;
+  if(!canvas)return;
+  const saved={zoom:zoom,panX:panX,panY:panY};
+  try{
+    // фиксированный размер: 1200×800 условных единиц × 2.5 = 3000×2000 px (не зависит от размера экрана)
+    const VW=1200,VH=800,k=2.5;
+    const tmp=document.createElement('canvas');tmp.width=Math.round(VW*k);tmp.height=Math.round(VH*k);
+    const tctx=tmp.getContext('2d');
+    if(seedNodeId&&seedDepth>0)computeSeedVisible();
+    const shown=graphData.nodes.filter(n=>!n.isIsolated&&nodeShown(n));
+    const isoShown=graphData.nodes.filter(n=>n.isIsolated&&nodeShown(n)).length;
+    const top=74*k,bottom=(isoShown?118:36)*k,side=48*k;
+    const regionW=tmp.width-2*side,regionH=tmp.height-top-bottom;
+    if(shown.length){
+      const minX=Math.min(...shown.map(n=>n.x)),maxX=Math.max(...shown.map(n=>n.x));
+      const minY=Math.min(...shown.map(n=>n.y)),maxY=Math.max(...shown.map(n=>n.y));
+      const spanX=Math.max(60,maxX-minX),spanY=Math.max(60,maxY-minY);
+      zoom=Math.min(regionW/spanX,regionH/spanY,3*k);
+      panX=-((minX+maxX)/2)*zoom;
+      panY=(top+regionH/2-tmp.height/2)-((minY+maxY)/2)*zoom;
+    }else{zoom=k;panX=0;panY=0;}
+    const ex={k:k,font:10.5,legend:true,stats:null};
+    drawGraphTo(tctx,tmp.width,tmp.height,whiteBg?'light':'dark',ex);
+    const a=document.createElement('a');a.href=tmp.toDataURL('image/png');a.download='academic_graph_'+(whiteBg?'white':'dark')+'.png';a.click();
+    const st=ex.stats;
+    showToast('PNG сохранён ('+tmp.width+'×'+tmp.height+' px, '+(whiteBg?'белый фон':'тёмный фон')+')'+(st?'. Подписи: '+st.shown+' из '+st.total+(st.shown<st.total?' (перекрывающиеся пропущены — приблизьте раскладкой или отфильтруйте)':''):''),'info',7000);
+  }catch(e){showToast('Не удалось экспортировать PNG: '+e.message,'error');}
+  finally{zoom=saved.zoom;panX=saved.panX;panY=saved.panY;drawGraph();}
+}
+function downloadBlob(content,name,type){const blob=new Blob([content],{type:type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+function runDataAudit(){
+  const resultEl=document.getElementById('dataAuditResult');
+  if(!sourceArticles.length){resultEl.innerHTML='<div class="audit-summary warn">Нет данных для аудита — сначала загрузите файл.</div>';return;}
+  const issues=[];const byId=new Map(sourceArticles.map(a=>[a.id,a]));const ids=new Set(sourceArticles.map(a=>a.id));
+  const isolated=[];
+  sourceArticles.forEach(a=>{
+    const has=sourceArticles.some(b=>{
+      if(b.id===a.id)return false;
+      if(metricTypes.cite&&(a.citations.includes(b.id)||b.citations.includes(a.id)))return true;
+      if(metricTypes.coauthor&&a.authors.some(x=>b.authors.includes(x)))return true;
+      if(metricTypes.topic&&a.topics.filter(t=>b.topics.includes(t)).length>=topicThreshold)return true;
+      return false;
+    });
+    if(!has)isolated.push(a);
+  });
+  if(isolated.length)issues.push({type:'warn',text:'Изолированные статьи ('+isolated.length+'): '+isolated.map(a=>a.title+' (#'+a.id+')').join('; ')});
+  const broken=[];
+  sourceArticles.forEach(a=>{a.citations.forEach(c=>{if(!ids.has(c))broken.push({from:a.id,to:c});});});
+  if(broken.length)issues.push({type:'err',text:'Цитаты на несуществующие id ('+broken.length+'): '+broken.map(b=>b.from+'→'+b.to).join('; ')});
+  const future=[];
+  sourceArticles.forEach(a=>{const ya=Number(a.year);a.citations.forEach(c=>{const t=byId.get(c);if(!t)return;const yc=Number(t.year);if(!isNaN(ya)&&!isNaN(yc)&&yc>ya)future.push({from:a.id,to:c,ya:ya,yc:yc});});});
+  if(future.length)issues.push({type:'warn',text:'Цитаты в будущее ('+future.length+'): '+future.map(f=>f.from+'('+f.ya+')→'+f.to+'('+f.yc+')').join('; ')});
+  const selfc=[];
+  sourceArticles.forEach(a=>{if(a.citations.includes(a.id))selfc.push(a.id);});
+  if(selfc.length)issues.push({type:'warn',text:'Петли: статья цитирует саму себя ('+selfc.length+'): '+selfc.join(', ')});
+  if(lastImportLog){
+    if(lastImportLog.loops.length)issues.push({type:'warn',text:'При последнем импорте удалены петли (статья цитирует саму себя) ('+lastImportLog.loops.length+'): '+lastImportLog.loops.join(', ')});
+    if(lastImportLog.broken.length)issues.push({type:'err',text:'При последнем импорте удалены цитаты на несуществующие id ('+lastImportLog.broken.length+'): '+lastImportLog.broken.join('; ')});
+  }
+  const empty=[];
+  sourceArticles.forEach(a=>{
+    const probs=[];
+    if(!a.authors.length)probs.push('нет авторов');
+    if(!a.topics.length)probs.push('нет тем');
+    if(!a.udc||a.udc==='Без УДК')probs.push('нет УДК');
+    if(a.year===undefined||a.year===null||isNaN(Number(a.year)))probs.push('нет года');
+    if(!a.abstract||a.abstract==='Аннотация отсутствует')probs.push('нет аннотации');
+    if(probs.length)empty.push(a.id+': '+probs.join(', '));
+  });
+  if(empty.length)issues.push({type:'warn',text:'Пустые/битые поля ('+empty.length+'): '+empty.join('; ')});
+  const nonNorm=[];
+  sourceArticles.forEach(a=>{a.authors.forEach(au=>{const re=/^(\p{L}+(?:[ '\-]\p{L}+)*\p{Ll}\S*)\s+((?:\p{Lu}\.?\s*){1,3})$/u;if(!re.test(au))nonNorm.push(au+' ('+a.id+')');});});
+  if(nonNorm.length)issues.push({type:'warn',text:'Авторы вне шаблона «Фамилия И. О.» ('+nonNorm.length+'): '+nonNorm.join('; ')});
+  const topicSet=new Set();sourceArticles.forEach(a=>a.topics.forEach(t=>topicSet.add(t)));
+  const synonyms=[['ptsd','птср'],['ptsd','посттравматическое стрессовое расстройство'],['depression','депрессия'],['cbt','кпт'],['dbt','дпт']];
+  const foundSyn=[];synonyms.forEach(([x,y])=>{if(topicSet.has(x)&&topicSet.has(y))foundSyn.push(x+' ↔ '+y);});
+  if(foundSyn.length)issues.push({type:'warn',text:'Темы-синонимы ('+foundSyn.length+'): '+foundSyn.join('; ')});
+  const comps=countComponents(graphData.nodes,graphData.links);
+  if(comps>1)issues.push({type:'warn',text:'Компонент связности: '+comps+' (граф распадается на несколько групп)'});
+  const authList=[...new Set(sourceArticles.flatMap(a=>a.authors))];const dup=[];
+  for(let i=0;i<authList.length;i++)for(let j=i+1;j<authList.length;j++){const a=authList[i],b=authList[j];const fa=a.split(' ')[0],fb=b.split(' ')[0];if(fa===fb&&a!==b)dup.push(a+' ↔ '+b);}
+  if(dup.length)issues.push({type:'warn',text:'Возможные дубликаты авторов ('+dup.length+'): '+dup.slice(0,10).join('; ')+(dup.length>10?' и др.':'')});
+
+  let html='';
+  if(!issues.length){html='<div class="audit-summary ok">Аудит пройден: проблем не обнаружено.</div>';}
+  else{
+    html='<table class="audit-table"><thead><tr><th>Тип</th><th>Описание</th></tr></thead><tbody>';
+    issues.forEach(i=>{html+='<tr><td class="'+i.type+'">'+(i.type==='err'?'Ошибка':'Предупр.')+'</td><td>'+escapeHtml(i.text)+'</td></tr>';});
+    html+='</tbody></table>';
+    const errs=issues.filter(i=>i.type==='err').length, warns=issues.filter(i=>i.type==='warn').length;
+    html+='<div class="audit-summary '+(errs?'warn':'ok')+'">Ошибок: '+errs+', предупреждений: '+warns+'. Результат идёт в PDF-отчёт (раздел «5. Исключения»).</div>';
+  }
+  resultEl.innerHTML=html;
+}
+
+/* ---------- ГРАФИКИ (v2.7.2 — переписаны, без вложенных template literals) ---------- */
+function makeChartCanvas(w,h,drawFn){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const g=c.getContext('2d');
+  g.fillStyle='#ffffff';g.fillRect(0,0,w,h);
+  drawFn(g,w,h);
+  return c.toDataURL('image/png');
+}
+function drawAxes(g,x0,y0,x1,y1,xLabels,yTicks,yLabel){
+  // v2.7.2: защита от не-массива
+  if(!Array.isArray(xLabels)){console.warn('drawAxes: xLabels is not an array, fallback to []',xLabels);xLabels=[];}
+  if(!Array.isArray(yTicks)){console.warn('drawAxes: yTicks is not an array, fallback to []',yTicks);yTicks=[];}
+  g.strokeStyle='#333';g.lineWidth=1;
+  g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y1);g.lineTo(x1,y1);g.stroke();
+  g.fillStyle='#333';g.font='10px Arial';g.textAlign='center';
+  xLabels.forEach(l=>{g.fillText(String(l.text),l.x,y1+14);});
+  g.textAlign='right';
+  yTicks.forEach(t=>{
+    g.fillStyle='#333';g.fillText(String(t.label),x0-6,t.y+3);
+    g.strokeStyle='rgba(0,0,0,.08)';g.setLineDash([2,2]);
+    g.beginPath();g.moveTo(x0,t.y);g.lineTo(x1,t.y);g.stroke();g.setLineDash([]);
+  });
+  g.textAlign='left';g.fillStyle='#333';g.font='11px Arial';
+  g.fillText(String(yLabel||''),x0,y0-8);
+}
+function drawHistogramYearCount(nodes){
+  const W=520,H=260,padL=40,padR=20,padT=30,padB=40;
+  return makeChartCanvas(W,H,(g,w,h)=>{
+    const years=nodes.map(n=>Number(n.year)).filter(y=>!isNaN(y));
+    if(!years.length){g.fillStyle='#333';g.font='12px Arial';g.fillText('Нет данных по годам',padL,padT+20);return;}
+    const minYr=Math.min.apply(null,years),maxYr=Math.max.apply(null,years);
+    const span=Math.max(1,maxYr-minYr);
+    const buckets={};years.forEach(y=>{buckets[y]=(buckets[y]||0)+1;});
+    const maxC=Math.max.apply(null,Object.values(buckets));
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const barW=Math.max(4,plotW/(span+1)*0.7);
+    const xFor=y=>padL+(y-minYr)/span*(plotW-barW);
+    const yFor=c=>H-padB-c/maxC*plotH;
+    const xLabels=[];const step=Math.max(1,Math.ceil(span/8));
+    for(let y=minYr;y<=maxYr;y+=step)xLabels.push({x:xFor(y)+barW/2,text:String(y)});
+    const yTicks=[];for(let i=0;i<=4;i++){const c=Math.round(maxC*i/4);yTicks.push({y:yFor(c),label:String(c)});}
+    drawAxes(g,padL,padT,W-padR,H-padB,xLabels,yTicks,'Количество статей');
+    g.fillStyle='#444';
+    Object.keys(buckets).forEach(k=>{
+      const y=+k,c=buckets[k];
+      const x=xFor(y),yTop=yFor(c);
+      g.fillRect(x,yTop,barW,H-padB-yTop);
+    });
+  });
+}
+function drawLineMedianMaxDegree(nodes){
+  const W=520,H=260,padL=50,padR=20,padT=30,padB=40;
+  return makeChartCanvas(W,H,(g,w,h)=>{
+    const byYear={};
+    nodes.forEach(n=>{
+      const y=Number(n.year);if(isNaN(y))return;
+      const d=n.degree;if(d===undefined)return;
+      if(!byYear[y])byYear[y]=[];
+      byYear[y].push(d);
+    });
+    const years=Object.keys(byYear).map(Number).sort((a,b)=>a-b);
+    if(!years.length){g.fillStyle='#333';g.font='12px Arial';g.fillText('Нет данных о степени (Degree) по годам',padL,padT+20);return;}
+    const series=years.map(y=>{
+      const arr=byYear[y].slice().sort((a,b)=>a-b);
+      const median=arr.length%2?arr[(arr.length-1)/2]:(arr[arr.length/2-1]+arr[arr.length/2])/2;
+      const max=Math.max.apply(null,arr);
+      return {year:y,median:median,max:max};
+    });
+    const maxV=Math.max.apply(null,series.map(s=>s.max).concat([0.0001]));
+    const minYear=years[0],maxYear=years[years.length-1];
+    const span=Math.max(1,maxYear-minYear);
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const xFor=y=>padL+(y-minYear)/span*plotW;
+    const yFor=v=>H-padB-v/maxV*plotH;
+    const xLabels=[];const step=Math.max(1,Math.ceil(span/8));
+    for(let y=minYear;y<=maxYear;y+=step)xLabels.push({x:xFor(y),text:String(y)});
+    const yTicks=[];for(let i=0;i<=4;i++){const v=maxV*i/4;yTicks.push({y:yFor(v),label:v.toFixed(2)});}
+    drawAxes(g,padL,padT,W-padR,H-padB,xLabels,yTicks,'Degree, степень (медиана / макс)');
+    g.strokeStyle='#2563eb';g.lineWidth=1.6;g.setLineDash([5,4]);
+    g.beginPath();series.forEach((s,i)=>{const x=xFor(s.year),y=yFor(s.median);if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});g.stroke();g.setLineDash([]);
+    g.strokeStyle='#111';g.lineWidth=1.6;
+    g.beginPath();series.forEach((s,i)=>{const x=xFor(s.year),y=yFor(s.max);if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});g.stroke();
+    series.forEach(s=>{
+      g.fillStyle='#111';g.beginPath();g.arc(xFor(s.year),yFor(s.max),3,0,Math.PI*2);g.fill();
+      g.fillStyle='#2563eb';g.beginPath();g.arc(xFor(s.year),yFor(s.median),2.5,0,Math.PI*2);g.fill();
+    });
+    g.fillStyle='#333';g.font='10px Arial';g.textAlign='left';
+    g.fillText('— макс',padL,padT-12);
+    g.fillStyle='#2563eb';g.fillText('- - медиана',padL+60,padT-12);
+  });
+}
+function quantile(arr,p){
+  if(!arr.length)return 0;
+  const s=arr.slice().sort((a,b)=>a-b);
+  const idx=(s.length-1)*p;
+  const lo=Math.floor(idx),hi=Math.ceil(idx);
+  if(lo===hi)return s[lo];
+  return s[lo]+(s[hi]-s[lo])*(idx-lo);
+}
+function drawBoxPlotDegree(nodes){
+  const W=520,H=260,padL=50,padR=20,padT=30,padB=40;
+  return makeChartCanvas(W,H,(g,w,h)=>{
+    const byYear={};
+    nodes.forEach(n=>{
+      const y=Number(n.year);if(isNaN(y))return;
+      const d=n.degree;if(d===undefined)return;
+      if(!byYear[y])byYear[y]=[];
+      byYear[y].push(d);
+    });
+    const years=Object.keys(byYear).map(Number).sort((a,b)=>a-b).filter(y=>byYear[y].length>=2);
+    if(!years.length){g.fillStyle='#333';g.font='12px Arial';g.fillText('Нет данных (нужно ≥2 статей в год)',padL,padT+20);return;}
+    const allVals=[];years.forEach(y=>byYear[y].forEach(v=>allVals.push(v)));
+    const maxV=Math.max.apply(null,allVals.concat([0.0001]));
+    const minYear=years[0],maxYear=years[years.length-1];
+    const span=Math.max(1,maxYear-minYear);
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const boxW=Math.max(10,Math.min(40,plotW/(years.length+1)*0.5));
+    const xFor=y=>padL+(y-minYear)/span*plotW;
+    const yFor=v=>H-padB-v/maxV*plotH;
+    const xLabels=[];const step=Math.max(1,Math.ceil(span/8));
+    for(let y=minYear;y<=maxYear;y+=step)xLabels.push({x:xFor(y),text:String(y)});
+    const yTicks=[];for(let i=0;i<=4;i++){const v=maxV*i/4;yTicks.push({y:yFor(v),label:v.toFixed(2)});}
+    drawAxes(g,padL,padT,W-padR,H-padB,xLabels,yTicks,'Degree, степень (распределение)');
+    g.strokeStyle='#333';g.fillStyle='#fff';g.lineWidth=1;
+    years.forEach(y=>{
+      const arr=byYear[y].slice().sort((a,b)=>a-b);
+      const q1=quantile(arr,0.25),med=quantile(arr,0.5),q3=quantile(arr,0.75);
+      const iqr=q3-q1,lo=Math.max(0,q1-1.5*iqr),hi=Math.min(maxV,q3+1.5*iqr);
+      const x=xFor(y);
+      g.beginPath();g.moveTo(x,yFor(lo));g.lineTo(x,yFor(q1));g.stroke();
+      g.beginPath();g.moveTo(x,yFor(q3));g.lineTo(x,yFor(hi));g.stroke();
+      g.beginPath();g.moveTo(x-boxW/4,yFor(lo));g.lineTo(x+boxW/4,yFor(lo));g.stroke();
+      g.beginPath();g.moveTo(x-boxW/4,yFor(hi));g.lineTo(x+boxW/4,yFor(hi));g.stroke();
+      g.fillRect(x-boxW/2,yFor(q3),boxW,yFor(q1)-yFor(q3));
+      g.strokeRect(x-boxW/2,yFor(q3),boxW,yFor(q1)-yFor(q3));
+      g.beginPath();g.moveTo(x-boxW/2,yFor(med));g.lineTo(x+boxW/2,yFor(med));g.stroke();
+      arr.forEach(v=>{if(v<lo||v>hi){g.beginPath();g.arc(x,yFor(v),2.2,0,Math.PI*2);g.fillStyle='#111';g.fill();}});
+    });
+  });
+}
+function drawInfluentialVsOthers(nodes){
+  const W=520,H=260,padL=50,padR=20,padT=30,padB=40;
+  return makeChartCanvas(W,H,(g,w,h)=>{
+    const byYear={};
+    nodes.forEach(n=>{
+      const y=Number(n.year);if(isNaN(y))return;
+      const d=n.degree;if(d===undefined)return;
+      if(!byYear[y])byYear[y]=[];
+      byYear[y].push(d);
+    });
+    const years=Object.keys(byYear).map(Number).sort((a,b)=>a-b);
+    if(!years.length){g.fillStyle='#333';g.font='12px Arial';g.fillText('Нет данных о степени (Degree) по годам',padL,padT+20);return;}
+    const series=years.map(y=>{
+      const arr=byYear[y].slice().sort((a,b)=>b-a);
+      const cut=Math.max(1,Math.round(arr.length*0.25));
+      const top=arr.slice(0,cut);
+      const rest=arr.slice(cut);
+      const avgTop=top.reduce((s,v)=>s+v,0)/top.length;
+      const avgRest=rest.length?rest.reduce((s,v)=>s+v,0)/rest.length:0;
+      return {year:y,avgTop:avgTop,avgRest:avgRest};
+    });
+    const maxV=Math.max.apply(null,series.map(s=>Math.max(s.avgTop,s.avgRest)).concat([0.0001]));
+    const minYear=years[0],maxYear=years[years.length-1];
+    const span=Math.max(1,maxYear-minYear);
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const xFor=y=>padL+(y-minYear)/span*plotW;
+    const yFor=v=>H-padB-v/maxV*plotH;
+    const xLabels=[];const step=Math.max(1,Math.ceil(span/8));
+    for(let y=minYear;y<=maxYear;y+=step)xLabels.push({x:xFor(y),text:String(y)});
+    const yTicks=[];for(let i=0;i<=4;i++){const v=maxV*i/4;yTicks.push({y:yFor(v),label:v.toFixed(2)});}
+    drawAxes(g,padL,padT,W-padR,H-padB,xLabels,yTicks,'Degree, степень (среднее)');
+    g.strokeStyle='#111';g.lineWidth=1.8;
+    g.beginPath();series.forEach((s,i)=>{const x=xFor(s.year),y=yFor(s.avgTop);if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});g.stroke();
+    g.strokeStyle='#777';g.lineWidth=1.6;g.setLineDash([4,4]);
+    g.beginPath();series.forEach((s,i)=>{const x=xFor(s.year),y=yFor(s.avgRest);if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});g.stroke();g.setLineDash([]);
+    series.forEach(s=>{
+      g.fillStyle='#111';g.beginPath();g.arc(xFor(s.year),yFor(s.avgTop),3,0,Math.PI*2);g.fill();
+      g.fillStyle='#777';g.beginPath();g.arc(xFor(s.year),yFor(s.avgRest),2.5,0,Math.PI*2);g.fill();
+    });
+    g.fillStyle='#333';g.font='10px Arial';g.textAlign='left';
+    g.fillText('— влиятельные (топ-25%)',padL,padT-12);
+    g.fillStyle='#777';g.fillText('- - остальные',padL+170,padT-12);
+  });
+}
+
+/* ---------- PDF Report ---------- */
+function openReportDialog(){
+  if(!graphData.nodes.length){showToast('Граф пуст — нечего печатать','warn');return;}
+  document.getElementById('reportModal').classList.add('active');
+}
+function closeReportDialog(){document.getElementById('reportModal').classList.remove('active');}
+document.querySelectorAll('#optFormat .opt').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('#optFormat .opt').forEach(x=>x.classList.remove('active'));el.classList.add('active');reportOpts.format=el.dataset.val;}));
+document.querySelectorAll('#optNodes .opt').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('#optNodes .opt').forEach(x=>x.classList.remove('active'));el.classList.add('active');reportOpts.nodes=el.dataset.val;}));
+document.querySelectorAll('#optLinks .opt').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('#optLinks .opt').forEach(x=>x.classList.remove('active'));el.classList.add('active');reportOpts.links=el.dataset.val;}));
+document.querySelectorAll('#optAudit .opt').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('#optAudit .opt').forEach(x=>x.classList.remove('active'));el.classList.add('active');reportOpts.audit=el.dataset.val;}));
+document.querySelectorAll('#optDynamics .opt').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('#optDynamics .opt').forEach(x=>x.classList.remove('active'));el.classList.add('active');reportOpts.dynamics=el.dataset.val;}));
+
+function qualitative(metric,val,n,informative){const h=metricHint(metric,val,n,informative);return h.text;}
+function buildReportPayload(){
+  let nodes,links;
+  if(reportOpts.nodes==='visible'){
+    nodes=visibleNodes();
+    const ids=new Set(nodes.map(n=>n.id));
+    links=graphData.links.filter(l=>ids.has(l.source.id)&&ids.has(l.target.id)&&linkTypeForMetrics(l.type));
+  }else{
+    nodes=graphData.nodes.slice();
+    links=graphData.links.filter(l=>linkTypeForMetrics(l.type));
+  }
+  const sorted=nodes.slice().sort((a,b)=>{
+    const ya=Number(a.year),yb=Number(b.year);
+    const na=isNaN(ya)?9999:ya, nb=isNaN(yb)?9999:yb;
+    if(na!==nb)return na-nb;
+    return a.name.localeCompare(b.name,'ru');
+  });
+  const numMap=new Map();sorted.forEach((n,i)=>numMap.set(n.id,i+1));
+  return {nodes:sorted,links:links,numMap:numMap};
+}
+function generateReport(){
+  try{
+    closeReportDialog();
+    const payload=buildReportPayload();
+    const nodes=payload.nodes,links=payload.links,numMap=payload.numMap;
+    const n=nodes.length;
+    const ids=new Set(nodes.map(x=>x.id));
+    const localLinks=links.filter(l=>ids.has(l.source.id)&&ids.has(l.target.id));
+    const pairs=uniquePairs(localLinks);
+    const density=n>1?pairs.size/(n*(n-1)/2):0;
+    const comps=countComponents(nodes,localLinks);
+    const dinfo=densityInfo(density,n);
+
+    const authorCount={};
+    nodes.forEach(nd=>{(nd.authors||[]).forEach(a=>authorCount[a]=(authorCount[a]||0)+1);});
+    const topAuthors=Object.entries(authorCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const topBy=m=>nodes.filter(x=>x[m]!==undefined).sort((a,b)=>(b[m]??0)-(a[m]??0)).slice(0,5);
+
+    const linkCountByNode=new Map();
+    nodes.forEach(nd=>linkCountByNode.set(nd.id,{total:new Set(),cite:0,coauthor:0,topic:0}));
+    localLinks.forEach(l=>{
+      const s=linkCountByNode.get(l.source.id),t=linkCountByNode.get(l.target.id);
+      if(s){s.total.add(l.target.id);if(l.type==='cite')s.cite++;else if(l.type==='coauthor')s.coauthor++;else s.topic++;}
+      if(t){t.total.add(l.source.id);if(l.type==='cite')t.cite++;else if(l.type==='coauthor')t.coauthor++;else t.topic++;}
+    });
+
+    const dateStr=new Date().toLocaleString('ru-RU');
+    const pageSize=reportOpts.format==='landscape'?'A4 landscape':'A4 portrait';
+    const modeLabel=metricsMode==='full'?'полный граф (без фильтров УДК/авторов)':'видимый граф';
+    const typesLabel=typesLabelRu();
+    const filtersLabel=[];
+    if(hiddenUdcs.size)filtersLabel.push('скрыто УДК: '+[...hiddenUdcs].join(', '));
+    if(excludedAuthors.size)filtersLabel.push('исключено авторов: '+excludedAuthors.size);
+    filtersLabel.push('годы: '+yearLo+'–'+yearHi);
+    if(seedNodeId&&seedDepth)filtersLabel.push('фокус на соседях: '+seedDepth+' шаг(а)');
+    if(searchQuery)filtersLabel.push('поиск: «'+searchQuery+'»');
+
+    const W=reportOpts.format==='landscape'?1400:1000;
+    const H=reportOpts.format==='landscape'?900:720;
+    const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;
+    const tctx=tmp.getContext('2d');
+    tctx.fillStyle='#ffffff';tctx.fillRect(0,0,W,H);
+    const mainNodes=nodes.filter(x=>!x.isIsolated);
+    const minX=mainNodes.length?Math.min.apply(null,mainNodes.map(x=>x.x)):0;
+    const maxX=mainNodes.length?Math.max.apply(null,mainNodes.map(x=>x.x)):1;
+    const minY=mainNodes.length?Math.min.apply(null,mainNodes.map(x=>x.y)):0;
+    const maxY=mainNodes.length?Math.max.apply(null,mainNodes.map(x=>x.y)):1;
+    const spanX=Math.max(1,maxX-minX),spanY=Math.max(1,maxY-minY);
+    const pad=60;
+    const scale=Math.min((W-pad*2)/spanX,(H-pad*2)/spanY);
+    const cx=W/2-((minX+maxX)/2)*scale, cy=H/2-((minY+maxY)/2)*scale;
+    const w2s=(x,y)=>({x:cx+x*scale,y:cy+y*scale});
+    localLinks.forEach(l=>{
+      if(l.source.isIsolated||l.target.isIsolated)return;
+      const a=w2s(l.source.x,l.source.y),b=w2s(l.target.x,l.target.y);
+      tctx.strokeStyle='#000';
+      if(l.type==='coauthor'){tctx.setLineDash([6,4]);tctx.lineWidth=1.2;}
+      else if(l.type==='topic'){tctx.setLineDash([2,4]);tctx.lineWidth=1;}
+      else {tctx.setLineDash([]);tctx.lineWidth=1.4;}
+      tctx.beginPath();tctx.moveTo(a.x,a.y);tctx.lineTo(b.x,b.y);tctx.stroke();tctx.setLineDash([]);
+      if(l.type==='cite'){
+        const ang=Math.atan2(b.y-a.y,b.x-a.x),len=9;
+        tctx.fillStyle='#000';tctx.beginPath();
+        tctx.moveTo(b.x,b.y);
+        tctx.lineTo(b.x-len*Math.cos(ang-.45),b.y-len*Math.sin(ang-.45));
+        tctx.lineTo(b.x-len*Math.cos(ang+.45),b.y-len*Math.sin(ang+.45));
+        tctx.closePath();tctx.fill();
+      }
+      const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      const w=String(l.value);
+      tctx.font='bold 10px Arial';tctx.textAlign='center';tctx.textBaseline='middle';
+      const tw=tctx.measureText(w).width;
+      tctx.fillStyle='#fff';tctx.fillRect(mx-tw/2-2,my-7,tw+4,12);
+      tctx.fillStyle='#000';tctx.fillText(w,mx,my);
+    });
+    nodes.filter(nd=>!nd.isIsolated).forEach(nd=>{
+      const p=w2s(nd.x,nd.y);
+      const r=Math.max(9,Math.min(20,6+Math.sqrt(nd.val)*1.4));
+      tctx.fillStyle='#fff';tctx.strokeStyle='#000';tctx.lineWidth=1.6;
+      tctx.beginPath();tctx.arc(p.x,p.y,r,0,Math.PI*2);tctx.fill();tctx.stroke();
+      tctx.fillStyle='#000';tctx.font='bold '+Math.round(r*0.9)+'px Arial';
+      tctx.textAlign='center';tctx.textBaseline='middle';
+      tctx.fillText(String(numMap.get(nd.id)),p.x,p.y);
+    });
+    const isoNodes=nodes.filter(nd=>nd.isIsolated);
+    if(isoNodes.length){
+      const lineY=H-60,nodeY=H-30;
+      tctx.strokeStyle='#888';tctx.setLineDash([6,6]);tctx.lineWidth=1;
+      tctx.beginPath();tctx.moveTo(0,lineY);tctx.lineTo(W,lineY);tctx.stroke();tctx.setLineDash([]);
+      tctx.fillStyle='#333';tctx.font='11px Arial';tctx.textAlign='left';
+      tctx.fillText('Изолированные статьи ('+isoNodes.length+') — нет связей',10,lineY-6);
+      const spacing=Math.min(70,Math.max(36,(W-40)/Math.max(1,isoNodes.length)));
+      const startX=20+spacing/2;
+      isoNodes.forEach((nd,idx)=>{
+        const sx=startX+idx*spacing;
+        if(sx>W-20)return;
+        const r=Math.max(9,Math.min(18,6+Math.sqrt(nd.val)*1.4));
+        tctx.fillStyle='#fff';tctx.strokeStyle='#000';tctx.lineWidth=1.4;
+        tctx.beginPath();tctx.arc(sx,nodeY,r,0,Math.PI*2);tctx.fill();tctx.stroke();
+        tctx.fillStyle='#000';tctx.font='bold '+Math.round(r*0.85)+'px Arial';tctx.textAlign='center';tctx.textBaseline='middle';
+        tctx.fillText(String(numMap.get(nd.id)),sx,nodeY);
+        tctx.font='9px Arial';tctx.fillStyle='#333';tctx.textBaseline='alphabetic';
+        const label=nd.name.length>16?nd.name.slice(0,15)+'…':nd.name;
+        tctx.fillText(label,sx,nodeY+r+11);
+      });
+    }
+    const graphImg=tmp.toDataURL('image/png');
+
+    const metricsNodeCount=graphData._metricsNodeCount||n;
+
+    const rows=nodes.map(nd=>{
+      const num=numMap.get(nd.id);
+      const lc=linkCountByNode.get(nd.id);
+      const degQ=qualitative('degree',nd.degree,metricsNodeCount,true);
+      const betQ=qualitative('betweenness',nd.betweenness,metricsNodeCount,true);
+      const prQ=qualitative('pagerank',nd.pagerank,metricsNodeCount,nd.pagerankInformative);
+      const qual=['D: '+degQ,'B: '+betQ,'PR: '+prQ].join('; ');
+      return '<tr>'+
+        '<td class="num">'+num+'</td>'+
+        '<td>'+escapeHtml(nd.name)+(nd.isIsolated?' <i style="color:#888">(изолирована)</i>':'')+'</td>'+
+        '<td>'+escapeHtml((nd.authors||[]).join(', ')||'—')+'</td>'+
+        '<td class="c">'+escapeHtml(String(nd.year))+'</td>'+
+        '<td class="c">'+escapeHtml(nd.udc||'—')+'</td>'+
+        '<td class="c">'+lc.total.size+'</td>'+
+        '<td class="c">'+lc.cite+' / '+lc.coauthor+' / '+lc.topic+'</td>'+
+        '<td class="c">'+(nd.degree!==undefined?nd.degree.toFixed(3):'—')+'</td>'+
+        '<td class="c">'+(nd.betweenness!==undefined?nd.betweenness.toFixed(3):'—')+'</td>'+
+        '<td class="c">'+(nd.pagerank!==undefined?nd.pagerank.toFixed(4):'—')+'</td>'+
+        '<td class="qual">'+escapeHtml(qual)+'</td>'+
+      '</tr>';
+    }).join('');
+
+    let dynamicsHtml='';
+    if(reportOpts.dynamics==='yes'){
+      const chartNodes=nodes.filter(nd=>!nd.isIsolated);
+      if(chartNodes.length>=2){
+        const histImg=drawHistogramYearCount(chartNodes);
+        const lineImg=drawLineMedianMaxDegree(chartNodes);
+        const boxImg=drawBoxPlotDegree(chartNodes);
+        const inflImg=drawInfluentialVsOthers(chartNodes);
+        dynamicsHtml='<h2 class="page-break">4.5. Динамика по годам</h2>'+
+          '<div class="note">Графики построены по тем же статьям, что и таблица ('+(reportOpts.nodes==='visible'?'только видимые':'все')+'). Изолированные статьи исключены из графиков Degree (степени): у них нет связей.</div>'+
+          '<div class="charts-grid">'+
+            '<div class="chart-box"><h3>Год × количество статей</h3><img src="'+histImg+'" alt="Гистограмма"><p class="chart-note">В какие годы тема «вспыхнула». Высокий столбец — много публикаций в этот год.</p></div>'+
+            '<div class="chart-box"><h3>Год × Degree — степень (медиана / макс)</h3><img src="'+lineImg+'" alt="Линейный график"><p class="chart-note">Пики влияния: сплошная — максимум, пунктир — медиана. Если максимум высоко, а медиана низко — есть «звёзды».</p></div>'+
+            '<div class="chart-box"><h3>Год × Degree — степень (распределение)</h3><img src="'+boxImg+'" alt="Ящик с усами (box plot)"><p class="chart-note">Ящик с усами: широкий ящик — статьи очень разные по влиянию; узкий — все примерно одинаковы. Точки — выбросы.</p></div>'+
+            '<div class="chart-box"><h3>Влиятельные и остальные статьи</h3><img src="'+inflImg+'" alt="Сравнение"><p class="chart-note">Сплошная — среднее Degree (степень) у топ-25%, пунктир — у остальных. Растущий разрыв — тема «поляризуется».</p></div>'+
+          '</div>';
+      }else{
+        dynamicsHtml='<h2 class="page-break">4.5. Динамика по годам</h2><div class="note">Недостаточно данных для графиков (нужно ≥2 неизолированных статей).</div>';
+      }
+    }
+
+    let auditHtml='';
+    if(reportOpts.audit==='yes'){
+      const byId=new Map(nodes.map(a=>[a.id,a]));
+      const nodeIds=new Set(nodes.map(a=>a.id));
+      const isolated=[];const broken=[];const future=[];const selfc=[];const empty=[];const nonNorm=[];
+      nodes.forEach(a=>{
+        const has=localLinks.some(l=>(l.source.id===a.id||l.target.id===a.id));
+        if(!has)isolated.push(a);
+        (a.citations||[]).forEach(c=>{if(!nodeIds.has(c))broken.push({from:a.id,to:c});});
+        const ya=Number(a.year);
+        (a.citations||[]).forEach(c=>{const t=byId.get(c);if(!t)return;const yc=Number(t.year);if(!isNaN(ya)&&!isNaN(yc)&&yc>ya)future.push({from:a.id,to:c,ya:ya,yc:yc});});
+        if((a.citations||[]).includes(a.id))selfc.push(a.id);
+        const probs=[];
+        if(!a.authors||!a.authors.length)probs.push('нет авторов');
+        if(!a.topics||!a.topics.length)probs.push('нет тем');
+        if(!a.udc||a.udc==='Без УДК')probs.push('нет УДК');
+        if(a.year===undefined||a.year===null||isNaN(Number(a.year)))probs.push('нет года');
+        if(probs.length)empty.push(a.id+': '+probs.join(', '));
+        (a.authors||[]).forEach(au=>{
+          const re=/^(\p{L}+(?:[ '\-]\p{L}+)*\p{Ll}\S*)\s+((?:\p{Lu}\.?\s*){1,3})$/u;
+          if(!re.test(au))nonNorm.push(au+' ('+a.id+')');
+        });
+      });
+      const blocks=[];
+      if(isolated.length)blocks.push('<b>Изолированные статьи ('+isolated.length+'):</b><br>'+isolated.map(a=>'#'+numMap.get(a.id)+' '+escapeHtml(a.name)+' — '+escapeHtml(a.udc)+', '+(a.authors||[]).join(', ')).join('<br>'));
+      if(broken.length)blocks.push('<b>Цитаты на несуществующие id ('+broken.length+'):</b><br>'+broken.map(b=>b.from+'→'+b.to).join('; '));
+      if(future.length)blocks.push('<b>Цитаты в будущее ('+future.length+'):</b><br>'+future.map(f=>f.from+'('+f.ya+')→'+f.to+'('+f.yc+')').join('; '));
+      if(selfc.length)blocks.push('<b>Петли: статья цитирует саму себя ('+selfc.length+'):</b><br>'+selfc.join(', '));
+      if(lastImportLog&&lastImportLog.loops.length)blocks.push('<b>При последнем импорте удалены петли ('+lastImportLog.loops.length+'):</b><br>'+escapeHtml(lastImportLog.loops.join(', ')));
+      if(lastImportLog&&lastImportLog.broken.length)blocks.push('<b>При последнем импорте удалены цитаты на несуществующие id ('+lastImportLog.broken.length+'):</b><br>'+escapeHtml(lastImportLog.broken.join('; ')));
+      if(empty.length)blocks.push('<b>Пустые/битые поля ('+empty.length+'):</b><br>'+empty.join('<br>'));
+      if(nonNorm.length)blocks.push('<b>Авторы вне шаблона ('+nonNorm.length+'):</b><br>'+nonNorm.join('; '));
+      if(comps>1)blocks.push('<b>Компонент связности:</b> '+comps+' — граф распадается на несколько групп.');
+      if(blocks.length){
+        auditHtml='<h2 class="page-break">5. Исключения и предупреждения</h2>'+
+          '<div class="note">Раздел сформирован автоматически. Это не ошибки кода, а особенности данных, которые стоит проверить перед публикацией отчёта.</div>'+
+          blocks.map(b=>'<div class="card" style="margin-top:6px">'+b+'</div>').join('');
+      }else{
+        auditHtml='<h2 class="page-break">5. Исключения и предупреждения</h2><div class="note" style="border-left-color:#10b981;background:#f0fff4;">Аудит пройден: проблем не обнаружено.</div>';
+      }
+    }
+
+    let linksTable='';
+    if(reportOpts.links==='yes'){
+      const rowsL=localLinks.map(l=>{
+        const a=numMap.get(l.source.id),b=numMap.get(l.target.id);
+        const type=l.type==='cite'?'цитирование':l.type==='coauthor'?'общий автор':'общие темы';
+        const extra=l.authors?(' ('+l.authors.join(', ')+')'):l.topics?(' ('+l.topics.join(', ')+')'):'';
+        return '<tr><td class="c">'+a+'</td><td class="c">'+b+'</td><td>'+type+escapeHtml(extra)+'</td><td class="c">'+l.value+'</td></tr>';
+      }).join('');
+      linksTable='<h2 class="page-break">6. Список связей</h2><table class="tbl compact"><thead><tr><th>#A</th><th>#B</th><th>Тип</th><th>Вес</th></tr></thead><tbody>'+rowsL+'</tbody></table>';
+    }
+
+    const topDeg=topBy('degree').map((x,i)=>'<li>'+(i+1)+'. '+escapeHtml(x.name)+' — '+(x.degree??0).toFixed(3)+'</li>').join('');
+    const topBet=topBy('betweenness').map((x,i)=>'<li>'+(i+1)+'. '+escapeHtml(x.name)+' — '+(x.betweenness??0).toFixed(3)+'</li>').join('');
+    const topPR=topBy('pagerank').map((x,i)=>'<li>'+(i+1)+'. '+escapeHtml(x.name)+' — '+(x.pagerank??0).toFixed(4)+'</li>').join('');
+    const topAuth=topAuthors.map(([a,c],i)=>'<li>'+(i+1)+'. '+escapeHtml(a)+' — '+c+' статей</li>').join('')||'<li>—</li>';
+
+    const html='<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Academic Graph Report — '+dateStr+'</title>'+
+'<style>'+
+'  @page { size: '+pageSize+'; margin: 14mm; }'+
+'  * { box-sizing: border-box; }'+
+'  body { font-family: \'Segoe UI\', Arial, sans-serif; color:#111; background:#fff; margin:0; padding:0; font-size:11px; }'+
+'  h1 { font-size:20px; margin:0 0 4px; }'+
+'  h2 { font-size:13px; margin:18px 0 6px; border-bottom:2px solid #111; padding-bottom:3px; }'+
+'  h3 { font-size:11px; margin:10px 0 4px; text-transform:uppercase; letter-spacing:.5px; }'+
+'  .meta { color:#555; font-size:10px; margin-bottom:12px; }'+
+'  .note { background:#f5f5f5; border-left:3px solid #111; padding:8px 10px; font-size:10px; line-height:1.5; margin:8px 0; }'+
+'  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }'+
+'  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }'+
+'  .card { border:1px solid #ccc; padding:8px 10px; border-radius:4px; }'+
+'  .card b { display:block; font-size:11px; }'+
+'  .card .big { font-size:16px; font-weight:700; margin:2px 0; }'+
+'  .card small { color:#555; font-size:9px; }'+
+'  ul { margin:4px 0 4px 18px; padding:0; }'+
+'  li { margin:2px 0; }'+
+'  table.tbl { width:100%; border-collapse:collapse; margin:6px 0; font-size:9.5px; }'+
+'  table.tbl th, table.tbl td { border:1px solid #999; padding:3px 4px; vertical-align:top; }'+
+'  table.tbl th { background:#eee; font-weight:600; text-align:left; }'+
+'  table.tbl td.c { text-align:center; }'+
+'  table.tbl td.num { text-align:center; font-weight:700; width:28px; }'+
+'  table.tbl td.qual { font-size:8.5px; color:#333; }'+
+'  table.tbl.compact { font-size:9px; }'+
+'  .graph-wrap { border:1px solid #333; padding:4px; margin:6px 0; text-align:center; }'+
+'  .graph-wrap img { max-width:100%; height:auto; }'+
+'  .legend { font-size:9.5px; margin-top:6px; }'+
+'  .legend span { display:inline-block; margin-right:14px; }'+
+'  .legend .ln { display:inline-block; width:26px; height:0; border-top:2px solid #000; vertical-align:middle; margin-right:4px; }'+
+'  .legend .ln.dash { border-top-style:dashed; }'+
+'  .legend .ln.dot { border-top-style:dotted; }'+
+'  .page-break { page-break-before:always; }'+
+'  .footer { margin-top:16px; font-size:9px; color:#666; text-align:center; border-top:1px solid #ccc; padding-top:6px; }'+
+'  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }'+
+'  .chart-box { border:1px solid #999; padding:8px; border-radius:4px; }'+
+'  .chart-box h3 { margin:0 0 6px; font-size:11px; border:0; padding:0; }'+
+'  .chart-box img { width:100%; height:auto; display:block; }'+
+'  .chart-note { font-size:9px; color:#555; margin:6px 0 0; line-height:1.4; }'+
+'  @media print { .no-print { display:none; } body { padding:0; } }'+
+'  .print-bar { position:sticky; top:0; background:#222; color:#fff; padding:10px 16px; margin:0 0 10px; display:flex; justify-content:space-between; align-items:center; z-index:10; }'+
+'  .print-bar button { background:#2563eb; color:#fff; border:0; padding:8px 16px; border-radius:5px; cursor:pointer; font-size:12px; }'+
+'</style></head><body>'+
+'<div class="print-bar no-print"><div>📄 Отчёт сформирован. Нажмите «Печать» → «Сохранить как PDF».</div><button onclick="window.print()">🖨️ Печать / Сохранить как PDF</button></div>'+
+'<h1>Academic Graph Analyzer — отчёт по коллекции</h1>'+
+'<div class="meta">Сформирован: '+dateStr+' · Версия 2.7.4 · Формат: '+pageSize+' · Узлов: '+n+' · Связей (уникальных пар): '+pairs.size+' · Метрики: '+modeLabel+' · Учтены связи: '+typesLabel+(useAllLinksForPR?' · PageRank по всем связям (центральность)':'')+'</div>'+
+'<div class="meta">Фильтры: '+escapeHtml(filtersLabel.join('; '))+'</div>'+
+'<h2>1. Как читать отчёт</h2>'+
+'<div class="grid2">'+
+'  <div class="card"><h3>Типы связей</h3><ul>'+
+'    <li><b>Цитирование</b> — сплошная линия со стрелкой от цитирующей к цитируемой. Вес = 1.</li>'+
+'    <li><b>Общий автор</b> — пунктирная. Вес = число общих авторов.</li>'+
+'    <li><b>Общие темы</b> — точечная. Вес = число общих тем.</li>'+
+'  </ul></div>'+
+'  <div class="card"><h3>Метрики</h3><ul>'+
+'    <li><b>Degree (степень)</b> — уникальные соседи (0–1). &gt;0.3 — хаб. Петля (связь статьи с самой собой) не учитывается.</li>'+
+'    <li><b>Betweenness (посредничество)</b> — доля кратчайших путей через статью. &gt;0.2 — много путей. Петля не влияет.</li>'+
+'    <li><b>PageRank (авторитетность)</b> — вес с учётом авторитетности цитирующих. Среднее 1/n. Нет цитат — неинформативно. При «по всем связям» — центральность (centrality), не классический PageRank.</li>'+
+'    <li><b>Плотность</b> — доля уникальных связанных пар. 0.05–0.20 — типично.</li>'+
+'  </ul></div>'+
+'</div>'+
+'<div class="note">Метрики посчитаны по режиму «'+modeLabel+'». «Полный граф» = все статьи, <b>кроме скрытых фильтрами УДК и авторов</b>; скрытие УДК/автора пересобирает граф и меняет метрики. Слайдер лет, фокус «Соседи» и поиск на метрики «полного графа» не влияют. Номера на графе = номера в таблице. Числа на линиях = вес связи. В ч/б тип связи определяется стилем линии. <b>Связей</b> в таблице = уникальные пары; разбивка цитирования / общие авторы / общие темы = число рёбер (может быть больше из-за параллельных между одной парой). <b>Изолированные статьи</b> на графе — в отдельной полосе внизу, в таблице помечены «(изолирована)».</div>'+
+'<h2 class="page-break">2. Граф (ч/б, для печати)</h2>'+
+'<div class="graph-wrap"><img src="'+graphImg+'" alt="Граф"></div>'+
+'<div class="legend">'+
+'  <span><span class="ln"></span> Цитирование (стрелка)</span>'+
+'  <span><span class="ln dash"></span> Общий автор</span>'+
+'  <span><span class="ln dot"></span> Общие темы</span>'+
+'  <span>Число в узле = номер в таблице</span>'+
+'  <span>Число на линии = вес</span>'+
+'</div>'+
+'<h2 class="page-break">3. Таблица статей и метрик</h2>'+
+'<table class="tbl"><thead><tr>'+
+'  <th>#</th><th>Название</th><th>Авторы</th><th>Год</th><th>УДК</th>'+
+'  <th>Связей</th><th>цит. / общ. авт. / темы</th>'+
+'  <th>Degree (степень)</th><th>Betweenness (посредн.)</th><th>PageRank (авторитет.)</th><th>Интерпретация</th>'+
+'</tr></thead><tbody>'+rows+'</tbody></table>'+
+'<h2 class="page-break">4. Сводка</h2>'+
+'<div class="grid3">'+
+'  <div class="card"><b>Плотность</b><div class="big">'+density.toFixed(3)+'</div><small>'+dinfo.text+'; пар: '+pairs.size+' из '+(n*(n-1)/2)+'</small></div>'+
+'  <div class="card"><b>Компонент связности</b><div class="big">'+comps+'</div><small>'+(comps===1?'все статьи связаны':'есть изолированные группы')+'</small></div>'+
+'  <div class="card"><b>Статей / связей</b><div class="big">'+n+' / '+pairs.size+'</div><small>уникальные пары</small></div>'+
+'</div>'+
+'<div class="grid3" style="margin-top:10px;">'+
+'  <div class="card"><b>Топ-5 по Degree (степени)</b><ul>'+(topDeg||'<li>—</li>')+'</ul></div>'+
+'  <div class="card"><b>Топ-5 по Betweenness (посредничеству)</b><ul>'+(topBet||'<li>—</li>')+'</ul></div>'+
+'  <div class="card"><b>Топ-5 по PageRank (авторитетности)</b><ul>'+(topPR||'<li>—</li>')+'</ul></div>'+
+'</div>'+
+'<div class="grid2" style="margin-top:10px;">'+
+'  <div class="card"><b>Топ-5 авторов по числу статей</b><ul>'+topAuth+'</ul></div>'+
+'  <div class="card"><b>Примечания</b><ul>'+
+'    <li>Пороги интерпретации — ориентировочные.</li>'+
+'    <li>PageRank: '+(useAllLinksForPR?'центральность (centrality) по всем связям: симметризованный, не классический PageRank':'только по цитатам')+'.</li>'+
+'    <li>Метрики: '+modeLabel+'.</li>'+
+'    <li>'+(reportOpts.nodes==='visible'?'Показаны только видимые узлы.':'Показаны все статьи.')+'</li>'+
+'  </ul></div>'+
+'</div>'+
+dynamicsHtml+auditHtml+linksTable+
+'<div class="footer">Academic Graph Analyzer v2.7.4 · СНК Психиатрии · '+dateStr+'</div>'+
+'</body></html>';
+
+    let win=null;
+    try{win=window.open('','_blank');}catch(e){showToast('window.open заблокирован: '+e.message,'error');return;}
+    if(!win){showToast('Браузер заблокировал окно отчёта. Разрешите всплывающие окна.','error');return;}
+    try{
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      showToast('Отчёт сформирован. Нажмите «Печать» → «Сохранить как PDF».');
+    }catch(e){
+      showToast('Ошибка записи отчёта: '+e.message,'error');
+      console.error('Report write failed:',e);
+      try{win.close();}catch(_){}
+    }
+  }catch(e){
+    showToast('Ошибка генерации отчёта: '+e.message,'error');
+    console.error('generateReport failed:',e);
+  }
+}
+
+function makeTestGraph(nodesSpec, linksSpec){
+  const nodes=nodesSpec.map((id,i)=>({id:id,name:id,val:8,authors:[],udc:'test',topics:[],year:2000,citations:[],x:i*10,y:0,vx:0,vy:0}));
+  const byId=new Map(nodes.map(n=>[n.id,n]));
+  const links=linksSpec.map(pair=>({source:byId.get(pair[0]),target:byId.get(pair[1]),type:'cite',value:1}));
+  return {nodes:nodes,links:links};
+}
+function runSelfTest(){
+  const resultEl=document.getElementById('selfTestResult');
+  const tests=[];
+  {
+    const g=makeTestGraph(['a','b','c'],[['a','b'],['b','c']]);
+    const m=computeCentrality(g.nodes,g.links);
+    const idxB=g.nodes.findIndex(n=>n.id==='b');
+    tests.push({name:'Цепочка a–b–c: betweenness(b)',expected:1.0,got:m.betweenness[idxB]});
+  }
+  {
+    const g=makeTestGraph(['c','a','b','d','e'],[['c','a'],['c','b'],['c','d'],['c','e']]);
+    const m=computeCentrality(g.nodes,g.links);
+    const idxC=g.nodes.findIndex(n=>n.id==='c');
+    tests.push({name:'Звезда 5: betweenness(центр)',expected:1.0,got:m.betweenness[idxC]});
+  }
+  {
+    const g=makeTestGraph(['a','b','c','d','e'],[['a','b'],['b','c'],['c','d'],['d','e']]);
+    const m=computeCentrality(g.nodes,g.links);
+    const idx=p=>g.nodes.findIndex(n=>n.id===p);
+    tests.push({name:'Путь 5: betweenness(b)',expected:0.5,got:m.betweenness[idx('b')]});
+    tests.push({name:'Путь 5: betweenness(c)',expected:0.6667,got:m.betweenness[idx('c')],tol:0.01});
+    tests.push({name:'Путь 5: betweenness(d)',expected:0.5,got:m.betweenness[idx('d')]});
+  }
+  {
+    const g=makeTestGraph(['a','b','c','d'],[['a','b'],['a','c'],['a','d'],['b','c'],['b','d'],['c','d']]);
+    const m=computeCentrality(g.nodes,g.links);
+    tests.push({name:'K4: betweenness(a)',expected:0,got:m.betweenness[0]});
+  }
+  {
+    const g=makeTestGraph(['a','b'],[['a','b'],['a','b'],['a','b']]);
+    const m=computeCentrality(g.nodes,g.links);
+    tests.push({name:'Параллельные: degree(a) = 1 сосед',expected:1.0,got:m.degree[0]});
+    const pairs=uniquePairs(g.links);
+    tests.push({name:'Параллельные: уникальных пар',expected:1,got:pairs.size});
+  }
+  {
+    const g=makeTestGraph(['a','b','c'],[['a','b'],['b','c'],['a','a']]);
+    const m=computeCentrality(g.nodes,g.links);
+    const idxA=g.nodes.findIndex(n=>n.id==='a');
+    tests.push({name:'Петля (self-loop) a→a: degree(a) = 1 сосед (не 2)',expected:0.5,got:m.degree[idxA],tol:0.001});
+  }
+  {
+    const g=makeTestGraph(['a','b','c'],[]);
+    const pr=computePageRank(g.nodes,g.links,false,{cite:true,coauthor:true,topic:true});
+    tests.push({name:'Нет цитат (cite): PageRank неинформативен',expected:'false',got:String(pr.informative),string:true});
+  }
+  {
+    const g=makeTestGraph(['a','b','c','d'],[['a','b'],['b','c'],['c','d']]);
+    const m=computeCentrality(g.nodes,g.links);
+    const idx=p=>g.nodes.findIndex(n=>n.id===p);
+    tests.push({name:'Цепочка 4: betweenness(b)',expected:0.6667,got:m.betweenness[idx('b')],tol:0.01});
+    tests.push({name:'Цепочка 4: betweenness(c)',expected:0.6667,got:m.betweenness[idx('c')],tol:0.01});
+  }
+  {
+    tests.push({name:'normalizeAuthor("Иванов ИИ")',expected:'Иванов И. И.',got:normalizeAuthor('Иванов ИИ'),string:true});
+    tests.push({name:'normalizeAuthor("Иванов И.И.")',expected:'Иванов И. И.',got:normalizeAuthor('Иванов И.И.'),string:true});
+    tests.push({name:'normalizeAuthor("Иванов И. И.")',expected:'Иванов И. И.',got:normalizeAuthor('Иванов И. И.'),string:true});
+    tests.push({name:'normalizeAuthor("сидоров а.а.") — не нормализуется',expected:'сидоров а.а.',got:normalizeAuthor('сидоров а.а.'),string:true});
+    tests.push({name:'normalizeAuthor("Smith, John K.") — не нормализуется',expected:'Smith, John K.',got:normalizeAuthor('Smith, John K.'),string:true});
+  }
+
+  {
+    // v2.7.3: петли, импорт, диапазон лет, видимость, изолированные в нормировке, PageRank
+    const gl=makeTestGraph(['a','b'],[['a','b'],['b','a'],['a','a']]);
+    tests.push({name:'uniquePairs: a–b, b–a и петля a–a = 1 пара',expected:1,got:uniquePairs(gl.links).size});
+    const w=[],lg={broken:[],loops:[]};
+    const out=normalizeArticles([{id:'a',title:'A',citations:['a','b','zzz']},{id:'b',title:'B',citations:[]}],w,lg);
+    tests.push({name:'Импорт: петля a→a и фантом zzz удалены',expected:'b',got:out[0].citations.join(','),string:true});
+    tests.push({name:'Импорт: петель / фантомных цитат в журнале',expected:'1 / 1',got:lg.loops.length+' / '+lg.broken.length,string:true});
+    tests.push({name:'Импорт: есть предупреждение о петле',expected:'true',got:String(w.some(x=>x.indexOf('петель')>=0)),string:true});
+    const r1=computeYearRange([{year:1992},{year:2026},{year:'—'},{year:null}]);
+    tests.push({name:'Диапазон лет по данным (1992, 2026, «—», null)',expected:'1992–2026',got:r1[0]+'–'+r1[1],string:true});
+    const r2=computeYearRange([]);
+    tests.push({name:'Диапазон лет без данных',expected:'1900–2100',got:r2[0]+'–'+r2[1],string:true});
+    const iso={id:'i',isIsolated:true,year:1990},reg={id:'r',isIsolated:false,year:1990},inn={id:'q',isIsolated:false,year:2023};
+    tests.push({name:'Видимость: изолированный вне диапазона лет — виден',expected:'true',got:String(nodeShownBy(iso,2020,2024,false,new Set())),string:true});
+    tests.push({name:'Видимость: обычный вне диапазона лет — скрыт',expected:'false',got:String(nodeShownBy(reg,2020,2024,false,new Set())),string:true});
+    tests.push({name:'Видимость: при фокусе изолированный вне окрестности — скрыт',expected:'false',got:String(nodeShownBy(iso,2020,2024,true,new Set(['q']))),string:true});
+    tests.push({name:'Видимость: при фокусе узел окрестности в диапазоне — виден',expected:'true',got:String(nodeShownBy(inn,2020,2024,true,new Set(['q']))),string:true});
+    const gi=makeTestGraph(['a','b','c'],[['a','b']]);
+    const mi=computeCentrality(gi.nodes,gi.links);
+    tests.push({name:'Изолированный c входит в n: degree(a) = 1/(3−1)',expected:0.5,got:mi.degree[0]});
+    tests.push({name:'Изолированный c: degree(c) = 0',expected:0,got:mi.degree[2]});
+    const gp=makeTestGraph(['a','b'],[['a','b']]);
+    const pp=computePageRank(gp.nodes,gp.links,false,{cite:true,coauthor:true,topic:true});
+    tests.push({name:'PageRank a→b: PR(b), эталон networkx 0.6491',expected:0.6491,got:pp.pagerank[1],tol:0.003});
+    tests.push({name:'PageRank a→b: PR(a), эталон networkx 0.3509',expected:0.3509,got:pp.pagerank[0],tol:0.003});
+    tests.push({name:'normalizeAuthor("Петров-Водкин А.Б.")',expected:'Петров-Водкин А. Б.',got:normalizeAuthor('Петров-Водкин А.Б.'),string:true});
+    tests.push({name:'normalizeAuthor("И.И. Иванов") — порядок сохраняется',expected:'И. И. Иванов',got:normalizeAuthor('И.И. Иванов'),string:true});
+    tests.push({name:'normalizeAuthor("ВОЗ ООН") — организация не трогается',expected:'ВОЗ ООН',got:normalizeAuthor('ВОЗ ООН'),string:true});
+  }
+
+  {
+    // v2.7.4: построение связей по включённым типам (чистая функция buildLinks)
+    const A=[{id:'a',authors:['X'],topics:['t1','t2'],citations:['b']},{id:'b',authors:['X'],topics:['t1','t2'],citations:[]},{id:'c',authors:[],topics:[],citations:[]}];
+    const byId=new Map(A.map(a=>[a.id,{id:a.id}]));
+    const T=(c,co,t)=>({cite:c,coauthor:co,topic:t});
+    tests.push({name:'Типы связей: все включены → цитирование + общий автор + общие темы (a–b)',expected:'coauthor,cite,topic'.split(',').sort().join(','),got:buildLinks(A,byId,T(1,1,1),2).map(l=>l.type).sort().join(','),string:true});
+    tests.push({name:'Типы связей: без цитирований остаются общий автор и общие темы',expected:'coauthor,topic',got:buildLinks(A,byId,T(0,1,1),2).map(l=>l.type).sort().join(','),string:true});
+    tests.push({name:'Типы связей: только общие темы (порог 2) → 1 связь',expected:1,got:buildLinks(A,byId,T(0,0,1),2).length});
+    tests.push({name:'Типы связей: порог общих тем 3 при 2 общих → связи нет',expected:0,got:buildLinks(A,byId,T(0,0,1),3).length});
+    tests.push({name:'Типы связей: все выключены → связей нет (все статьи изолированы)',expected:0,got:buildLinks(A,byId,T(0,0,0),2).length});
+  }
+
+  let html='<div style="font-size:11px;color:#8a95a8;margin:6px 0;">Термины: degree — степень, betweenness — посредничество, PageRank — авторитетность, self-loop — петля, cite — цитирование.</div><table class="selftest-table"><thead><tr><th>Тест</th><th>Ожидалось</th><th>Получено</th><th>Результат</th></tr></thead><tbody>';
+  let passed=0;
+  tests.forEach(t=>{
+    let ok;
+    if(t.string){ok=String(t.got)===t.expected;}
+    else {const tol=t.tol||0.001;ok=Math.abs(t.got-t.expected)<=tol;}
+    if(ok)passed++;
+    const gotStr=t.string?t.got:(typeof t.got==='number'?t.got.toFixed(4):t.got);
+    html+='<tr><td>'+escapeHtml(t.name)+'</td><td>'+t.expected+'</td><td>'+gotStr+'</td><td class="'+(ok?'ok':'fail')+'">'+(ok?'✓ OK':'✗ FAIL')+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  html+='<div class="selftest-summary '+(passed===tests.length?'ok':'fail')+'">Пройдено '+passed+' из '+tests.length+' тестов'+(passed===tests.length?' — метрики соответствуют эталонным значениям networkx, нормализация работает как задокументировано.':' — есть расхождения, проверьте формулы.')+'</div>';
+  resultEl.innerHTML=html;
+}
+
+function saveState(){
+  if(isDemoData)return;
+  try{
+    const state={articles:sourceArticles,hiddenUdcs:[...hiddenUdcs],excludedAuthors:[...excludedAuthors],positions:graphData.nodes.map(n=>({id:n.id,x:n.x,y:n.y})),zoom:zoom,panX:panX,panY:panY,topicThreshold:topicThreshold,yearLo:yearLo,yearHi:yearHi,pagerankAllLinks:useAllLinksForPR,viewMode:viewMode,entityMode:entityMode,timelineY:timelineY,metricsMode:metricsMode,metricTypes:metricTypes};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    let raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw){for(const k of LEGACY_KEYS){raw=localStorage.getItem(k);if(raw){try{localStorage.setItem(STORAGE_KEY,raw);localStorage.removeItem(k);}catch(e){}break;}}}
+    if(!raw)return false;
+    const s=JSON.parse(raw);if(!s||!Array.isArray(s.articles)||!s.articles.length)return false;
+    sourceArticles=s.articles;sourceArticles.forEach(a=>{if(Array.isArray(a.citations))a.citations=a.citations.filter(c=>c!==a.id);});hiddenUdcs=new Set(s.hiddenUdcs||[]);excludedAuthors=new Set(s.excludedAuthors||[]);
+    topicThreshold=s.topicThreshold??2;yearLo=s.yearLo??YEAR_MIN;yearHi=s.yearHi??YEAR_MAX;useAllLinksForPR=!!s.pagerankAllLinks;
+    viewMode=s.viewMode||'force';entityMode=s.entityMode||'articles';timelineY=s.timelineY||'degree';isDemoData=false;
+    metricsMode=s.metricsMode||'full';
+    if(s.metricTypes)metricTypes={cite:s.metricTypes.cite!==false,coauthor:s.metricTypes.coauthor!==false,topic:s.metricTypes.topic!==false};
+    document.getElementById('topicThreshold').value=topicThreshold;document.getElementById('topicThresholdLabel').textContent=topicThreshold;
+    document.getElementById('yearMin').value=yearLo;document.getElementById('yearMax').value=yearHi;
+    document.getElementById('yearMinLabel').textContent=yearLo;document.getElementById('yearMaxLabel').textContent=yearHi;
+    document.getElementById('pagerankAllLinks').checked=useAllLinksForPR;
+    document.getElementById('showCitations').checked=metricTypes.cite;
+    document.getElementById('showCoauthors').checked=metricTypes.coauthor;
+    document.getElementById('showTopics').checked=metricTypes.topic;
+    document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('btn-primary',b.dataset.view===viewMode));
+    document.querySelectorAll('[data-entity]').forEach(b=>b.classList.toggle('btn-primary',b.dataset.entity===entityMode));
+    document.getElementById('timelineControls').style.display=viewMode==='timeline'?'block':'none';
+    document.getElementById('timelineY').value=timelineY;
+    rebuildGraph(false);
+    if(Array.isArray(s.positions)){const pos=new Map(s.positions.map(p=>[p.id,p]));graphData.nodes.forEach(n=>{const p=pos.get(n.id);if(p){n.x=p.x;n.y=p.y;n.vx=0;n.vy=0;}});}
+    zoom=s.zoom??zoom;panX=s.panX??panX;panY=s.panY??panY;
+    updateYearBounds();drawGraph();showToast('Восстановлено из локального хранилища');
+    return true;
+  }catch(e){console.warn(e);return false;}
+}
+function computeYearRange(articles){
+  const years=articles.map(a=>Number(a.year)).filter(y=>!isNaN(y)&&y>YEAR_MIN);
+  if(!years.length)return [YEAR_MIN,YEAR_MAX];
+  return [Math.min(...years),Math.max(...years)];
+}
+function resetYearRange(){
+  const r=computeYearRange(sourceArticles);
+  const lo=document.getElementById('yearMin'),hi=document.getElementById('yearMax');
+  lo.value=r[0];hi.value=r[1];yearLo=r[0];yearHi=r[1];
+  document.getElementById('yearMinLabel').textContent=yearLo;document.getElementById('yearMaxLabel').textContent=yearHi;
+}
+function updateYearBounds(){
+  const years=sourceArticles.map(a=>Number(a.year)).filter(y=>!isNaN(y)&&y>YEAR_MIN);
+  if(!years.length)return;
+  const lo=document.getElementById('yearMin'),hi=document.getElementById('yearMax');
+  const minY=Math.min(...years),maxY=Math.max(...years);
+  lo.min=hi.min=Math.min(minY,YEAR_MIN);lo.max=hi.max=Math.max(maxY,YEAR_MAX);
+  if(+lo.value<minY)lo.value=minY;if(+hi.value>maxY)hi.value=maxY;if(+lo.value>+hi.value){lo.value=minY;hi.value=maxY;}
+  yearLo=+lo.value;yearHi=+hi.value;
+  document.getElementById('yearMinLabel').textContent=yearLo;document.getElementById('yearMaxLabel').textContent=yearHi;
+}
+
+function goM(id){const el=document.getElementById(id);if(el)el.scrollIntoView({block:'start'});}
+function openManual(){document.getElementById('manualModal').classList.add('active');}
+function closeManual(){document.getElementById('manualModal').classList.remove('active');}
+
+const uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput');
+uploadZone.addEventListener('click',()=>fileInput.click());
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)processFile(f);});
+fileInput.addEventListener('change',e=>{const f=e.target.files[0];if(f)processFile(f);e.target.value='';});
+document.getElementById('searchBox').addEventListener('input',e=>{searchQuery=e.target.value.trim().toLowerCase();scheduleDraw();});
+document.getElementById('showLabels').addEventListener('change',scheduleDraw);
+['showCitations','showCoauthors','showTopics'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+  metricTypes.cite=document.getElementById('showCitations').checked;
+  metricTypes.coauthor=document.getElementById('showCoauthors').checked;
+  metricTypes.topic=document.getElementById('showTopics').checked;
+  rebuildGraph(false);
+  if(!isDemoData)saveState();
+  showToast('Типы связей: '+typesLabelRu());
+}));
+document.getElementById('topicThreshold').addEventListener('input',e=>{topicThreshold=+e.target.value;document.getElementById('topicThresholdLabel').textContent=topicThreshold;rebuildGraph(false);if(!isDemoData)saveState();});
+document.getElementById('pagerankAllLinks').addEventListener('change',e=>{useAllLinksForPR=e.target.checked;rebuildGraph(false);if(!isDemoData)saveState();});
+function applyYearFilter(){yearLo=+document.getElementById('yearMin').value;yearHi=+document.getElementById('yearMax').value;document.getElementById('yearMinLabel').textContent=yearLo;document.getElementById('yearMaxLabel').textContent=yearHi;updateStats();scheduleDraw();if(metricsMode==='visible'){recomputeMetrics();renderTopList(currentTopMetric);if(selectedNode)showArticleCard(selectedNode);}}
+document.getElementById('yearMin').addEventListener('input',applyYearFilter);
+document.getElementById('yearMax').addEventListener('input',applyYearFilter);
+document.getElementById('yearMin').addEventListener('change',()=>{if(!isDemoData)saveState();});
+document.getElementById('yearMax').addEventListener('change',()=>{if(!isDemoData)saveState();});
+function syncLayout(){
+  const tb=document.querySelector('.top-bar');
+  if(tb&&tb.offsetHeight>0)document.documentElement.style.setProperty('--tb',tb.offsetHeight+'px');
+}
+function onViewportChange(){syncLayout();resizeCanvas();}
+window.addEventListener('resize',onViewportChange);
+window.addEventListener('orientationchange',()=>setTimeout(onViewportChange,200));
+window.addEventListener('pageshow',onViewportChange);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)onViewportChange();});
+if(window.visualViewport)window.visualViewport.addEventListener('resize',onViewportChange);
+if(window.ResizeObserver){
+  const ro=new ResizeObserver(onViewportChange);
+  ro.observe(document.querySelector('.top-bar'));ro.observe(document.getElementById('graph-container'));
+}
+window.addEventListener('load',()=>{syncLayout();setupCanvas();const restored=loadState();if(!restored)loadSampleData();updateYearBounds();updateEmptyState();});
+</script>
+</body>
+</html>
