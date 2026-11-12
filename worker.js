@@ -36,6 +36,7 @@ export default {
 
       if (m === "POST" && (path === "/api/tests/submit" || path === "/api/register" || path === "/api/simulation/submit")) {
   const limited = await rateLimit(request, env, path === "/api/register" ? 20 : path === "/api/simulation/submit" ? 150 : 120);
+  if (limited) return limited;
       }
 
       if (path.startsWith("/api/tests")) { // опросники и шкалы (tests.js), права берём из наших функций
